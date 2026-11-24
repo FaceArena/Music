@@ -12,7 +12,7 @@ export default function App() {
     <main className="app-shell">
       <aside className="sidebar">
         <a className="brand" href="/" aria-label="Kimo — главная">
-          <span className="brand-mark"><AudioLines size={21} strokeWidth={2.4} /></span>
+          <img className="brand-mark" src="/kimo-mark.svg" alt="" />
           <span>kimo</span>
         </a>
 
