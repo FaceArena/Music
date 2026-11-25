@@ -277,7 +277,7 @@ body.noanim *{animation:none!important;transition:none!important}
     <button class="ib sm g" id="shuf" aria-label="Перемешать"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
     <button class="ib sm" id="prv" aria-label="Назад"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 20L9 12l10-8zM6 4v16"/></svg></button>
     <button class="pb" id="pb" aria-label="Играть"><svg viewBox="0 0 24 24"></svg></button>
-    <button class="ib sm" id="nxt" aria-label="Вперёд"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8zM18 4v16"/></svg></button>
+    <button class="ib sm repeat-control" id="repeatBtn" data-repeat-control type="button" aria-label="Повтор выключен" aria-pressed="false" title="Повтор выключен"></button>
     <button class="ib sm" aria-label="Таймер"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4M10 2h4M12 2v3"/></svg></button>
   </div>
   <div class="ctl2 st" style="--i:5">
@@ -285,7 +285,6 @@ body.noanim *{animation:none!important;transition:none!important}
     <label class="volume-control"><span>Громкость</span><input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label>
     <span style="flex:1"></span>
     <button class="ib" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
-    <button class="ib repeat-control" id="repeatBtn" data-repeat-control type="button" aria-label="Повтор выключен" aria-pressed="false" title="Повтор выключен"></button>
     <button class="ib" id="queueBtn" aria-label="Очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg></button>
   </div>
   <div class="prev st" id="prev" style="--i:6"><b>Предпросмотр текста</b><p id="pv"></p></div>
@@ -582,7 +581,7 @@ window.KIMO_STOP=function(){a.pause();a.removeAttribute('src');a.load();if(objec
 function toggle(){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
 function move(dir,automatic){var list=window.KIMO_TRACKS||[];if(!list.length)return;var i=list.findIndex(function(t){return t.id===currentId});if(i<0){play(list[0].id);return}if(shuffle&&list.length>1){var n=i;while(n===i)n=Math.floor(Math.random()*list.length);i=n}else{var next=i+dir;if(automatic&&repeatMode===0&&dir>0&&next>=list.length)return;i=(next+list.length)%list.length}if(list[i])play(list[i].id)}
 function nextTrack(){if(queueIds.length)playNext();else move(1,false)}
-gid('pp').onclick=toggle;gid('pb').onclick=toggle;gid('pb2').onclick=toggle;gid('prv').onclick=function(){if(a.currentTime>3)a.currentTime=0;else move(-1)};gid('nxt').onclick=function(){nextTrack()};
+gid('pp').onclick=toggle;gid('pb').onclick=toggle;gid('pb2').onclick=toggle;gid('prv').onclick=function(){if(a.currentTime>3)a.currentTime=0;else move(-1)};
 gid('shuf').onclick=function(){shuffle=!shuffle;this.classList.toggle('g',shuffle)};
 gid('volume').oninput=function(){a.volume=Number(this.value)};a.volume=Number(gid('volume').value);
 gid('queueBtn').onclick=function(){var self=this;self.classList.remove('queue-pulse');void self.offsetWidth;self.classList.add('queue-pulse');renderQueue()};
