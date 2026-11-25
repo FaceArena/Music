@@ -1140,29 +1140,68 @@ document.addEventListener('visibilitychange',function(){var v=bgm.querySelector(
 idbGet(function(f){if(f&&f.type)showBg(f)});
 })();
 (function(){
+ var audio=document.getElementById('audio');
  var bars=48,tracks=[].slice.call(document.querySelectorAll('.trk')),frame=0;
- function draw(animated,time){
+ var audioCtx=null,analyser=null,source=null,spectrum=null;
+ function setup(){
+  var Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx||!audio)return false;
+  try{
+   if(!audioCtx){
+    audioCtx=new Ctx();
+    analyser=audioCtx.createAnalyser();
+    analyser.fftSize=512;
+    analyser.smoothingTimeConstant=.78;
+    source=audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    spectrum=new Uint8Array(analyser.frequencyBinCount);
+   }
+   if(audioCtx.state==='suspended'){
+    var resume=audioCtx.resume();
+    if(resume&&resume.catch)resume.catch(function(){});
+   }
+   return true;
+  }catch(err){return false}
+ }
+ window.KIMO_VISUALIZER_START=setup;
+ function draw(){
+  var values=[];
+  if(analyser&&spectrum&&audio&&!audio.paused){
+   analyser.getByteFrequencyData(spectrum);
+   for(var i=0;i<bars;i++){
+    var from=Math.floor(Math.pow(i/bars,1.65)*spectrum.length);
+    var to=Math.max(from+1,Math.floor(Math.pow((i+1)/bars,1.65)*spectrum.length));
+    to=Math.min(to,spectrum.length);
+    var sum=0,count=0;
+    for(var j=from;j<to;j++){sum+=spectrum[j];count++}
+    values[i]=count?sum/count/255:0;
+   }
+  }
   var r='';
-  for(var i=0;i<bars;i++){
-   var base=5+Math.round(Math.abs(Math.sin(i*.9)*Math.cos(i*.37))*17);
-   var pulse=animated?(Math.sin(time/155+i*.62)+Math.sin(time/245-i*.31))*.20:0;
-   var h=Math.max(3,Math.min(23,base*(1+pulse)));
-   r+='<rect x="'+(i*2.5)+'" y="'+(12-h/2).toFixed(1)+'" width="1.6" height="'+h.toFixed(1)+'" rx=".8"/>';
+  for(var k=0;k<bars;k++){
+   var base=5+Math.round(Math.abs(Math.sin(k*.9)*Math.cos(k*.37))*17);
+   var amp=values.length?values[k]:0;
+   var h=values.length?Math.max(2.5,Math.min(23,2.5+amp*20)):base;
+   r+='<rect x="'+(k*2.5)+'" y="'+(12-h/2).toFixed(1)+'" width="1.6" height="'+h.toFixed(1)+'" rx=".8"/>';
   }
   var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" preserveAspectRatio="none">'+r+'</svg>';
   var u='url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
   tracks.forEach(function(el){el.style.webkitMaskImage=u;el.style.maskImage=u});
  }
- function animate(now){
-  if(a.paused){frame=0;draw(false,0);return}
-  draw(true,now);
+ function animate(){
+  if(!audio||audio.paused){frame=0;draw();return}
+  draw();
   frame=requestAnimationFrame(animate);
  }
- function start(){if(!frame)frame=requestAnimationFrame(animate)}
- a.addEventListener('play',start);
- a.addEventListener('pause',function(){if(frame)cancelAnimationFrame(frame);frame=0;draw(false,0)});
- draw(false,0);
-})();
+ function start(){setup();if(!frame)frame=requestAnimationFrame(animate)}
+ if(audio){
+  audio.addEventListener('play',start);
+  audio.addEventListener('pause',function(){if(frame)cancelAnimationFrame(frame);frame=0;draw()});
+  audio.addEventListener('ended',function(){if(frame)cancelAnimationFrame(frame);frame=0;draw()});
+ }
+ draw();
+})();;
 </script>
 </body>
 </html>
