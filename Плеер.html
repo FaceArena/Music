@@ -85,8 +85,8 @@ h2{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:34px 20px 12px}
 .pb svg{width:30px;height:30px;fill:var(--bg)}
 .prev{margin:auto 0 0;padding:16px 18px 18px;background:var(--sf2);border-radius:24px;flex:none;cursor:pointer}
 .prev b{font-size:13px;font-weight:500;color:var(--mute);display:block}.prev p{margin:8px 0 14px;font-size:19px;font-weight:600;letter-spacing:-.02em;line-height:1.25}.show-lyrics{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;padding:12px 18px;border:0;border-radius:14px;background:#f4f2ee;color:#0f0f11;font:600 14px Onest,-apple-system,sans-serif;transition:transform .35s var(--pop),filter .2s}.show-lyrics:active{transform:scale(.97);filter:brightness(.92)}.lyr-empty{min-height:100%;display:grid;place-items:center;padding:36px 24px;text-align:center;color:#f4f2ee99;font-size:15px;line-height:1.5}.lyr-empty strong{display:block;color:var(--tx);font-size:19px;margin-bottom:8px}
-.lw{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;margin:10px -24px 0;padding:10px 24px 120px;-webkit-mask-image:linear-gradient(#0000,#000 8%,#000 80%,#0000);mask-image:linear-gradient(#0000,#000 8%,#000 80%,#0000);scrollbar-width:none}
-.lw::-webkit-scrollbar{display:none}
+.lw{position:relative;flex:1 1 0%;height:0;min-height:0;min-width:0;overflow-x:hidden;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;touch-action:pan-y;align-self:stretch;margin:10px -24px 0;padding:10px 24px 120px;-webkit-mask-image:linear-gradient(#0000,#000 8%,#000 80%,#0000);mask-image:linear-gradient(#0000,#000 8%,#000 80%,#0000);scrollbar-width:none}
+.lw::-webkit-scrollbar{width:0;height:0;display:none}#lyr.open .lw{overflow-y:scroll;-webkit-overflow-scrolling:touch}
 .l{font-size:clamp(26px,7.6vw,34px);line-height:1.15;letter-spacing:-.03em;font-weight:600;margin:0 0 22px;color:#f4f2ee4d;transform:scale(.93);transform-origin:left center;filter:blur(.6px);transition:color .5s,transform .7s var(--pop),filter .5s;cursor:pointer}
 .l.on{color:var(--tx);transform:none;filter:none}
 .chips{display:flex;gap:8px;flex:none;margin-top:6px}
