@@ -14,7 +14,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .ib,.chip,.chp,.pb,.cancel,.plan button,.exit,.go,.tile{transition:transform .45s var(--pop),background .25s,color .25s}
 .ib:active,.chip:active,.chp:active,.pb:active,.exit:active,.go:active,.plan button:active{transform:scale(.9);transition-duration:.12s}
-#queueBtn svg{transform-origin:center;transition:transform .35s var(--pop)}#queueBtn.queue-pulse svg{animation:queueTap .55s var(--pop)}@keyframes queueTap{0%{transform:scale(1) rotate(0)}35%{transform:scale(.72) rotate(-9deg)}68%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1) rotate(0)}}.qrepeat{display:flex;align-items:center;gap:9px;margin:7px 8px 12px;padding:10px 12px;border-radius:14px;background:#ffffff0a}.qrepeat span{flex:1;font-size:13px;color:var(--mute)}.qrepeat button{display:flex;align-items:center;gap:7px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff10;color:var(--tx);padding:8px 11px;font:inherit;font-size:13px}.qrepeat button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.qrepeat button.active{color:var(--green);border-color:#ff5c7a55}.qrepeat button.bump{animation:repeatTap .58s ease-out!important}.qrepeat button.bump svg{transform-origin:50% 50%;animation:repeatIconSpin .58s ease-out!important}@keyframes repeatTap{0%{transform:scale(1);filter:brightness(1)}18%{transform:scale(.9);filter:brightness(1.35)}48%{transform:scale(1.18);filter:brightness(1.5)}72%{transform:scale(.96)}100%{transform:scale(1);filter:brightness(1)}}@keyframes repeatIconSpin{0%{transform:rotate(0) scale(1)}45%{transform:rotate(180deg) scale(1.18)}100%{transform:rotate(360deg) scale(1)}}@media(prefers-reduced-motion:reduce){#queueBtn.queue-pulse svg,.qrepeat button.bump,.qrepeat button.bump svg{animation:none!important}}
+#queueBtn svg{transform-origin:center;transition:transform .35s var(--pop)}#queueBtn.queue-pulse svg{animation:queueTap .55s var(--pop)}@keyframes queueTap{0%{transform:scale(1) rotate(0)}35%{transform:scale(.72) rotate(-9deg)}68%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1) rotate(0)}}.quick-actions{display:flex;justify-content:center;gap:12px;margin:12px 22px 4px}.quick-action{min-width:116px;display:flex;align-items:center;justify-content:center;gap:9px;padding:11px 16px;border:1px solid var(--ln);border-radius:16px;background:var(--sf);color:var(--tx);font-size:13px;transition:transform .2s var(--pop),background .2s,border-color .2s}.quick-action:active{transform:scale(.92)}.quick-action svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.quick-action.active{color:var(--green);border-color:#ff5c7a66;background:#ff5c7a12}.quick-action.bump{animation:quickBump .52s var(--pop)}.quick-action.bump .repeat-icon svg{animation:repeatIconSpin .58s ease-out}@keyframes quickBump{0%{transform:scale(1)}25%{transform:scale(.9)}55%{transform:scale(1.12)}100%{transform:scale(1)}}.qrepeat{display:flex;align-items:center;gap:9px;margin:7px 8px 12px;padding:10px 12px;border-radius:14px;background:#ffffff0a}.qrepeat span{flex:1;font-size:13px;color:var(--mute)}.qrepeat button{display:flex;align-items:center;gap:7px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff10;color:var(--tx);padding:8px 11px;font:inherit;font-size:13px}.qrepeat button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.qrepeat button.active{color:var(--green);border-color:#ff5c7a55}.qrepeat button.bump{animation:repeatTap .58s ease-out!important}.qrepeat button.bump svg{transform-origin:50% 50%;animation:repeatIconSpin .58s ease-out!important}@keyframes repeatTap{0%{transform:scale(1);filter:brightness(1)}18%{transform:scale(.9);filter:brightness(1.35)}48%{transform:scale(1.18);filter:brightness(1.5)}72%{transform:scale(.96)}100%{transform:scale(1);filter:brightness(1)}}@keyframes repeatIconSpin{0%{transform:rotate(0) scale(1)}45%{transform:rotate(180deg) scale(1.18)}100%{transform:rotate(360deg) scale(1)}}@media(prefers-reduced-motion:reduce){#queueBtn.queue-pulse svg,.qrepeat button.bump,.qrepeat button.bump svg{animation:none!important}}
 .hd,.lh2{display:flex;align-items:center;gap:6px;padding:4px 20px 0}
 .hd h1,.lh2 h1{flex:1;margin:0;font-size:32px;font-weight:600;letter-spacing:-.035em}
 .lh2 .av{order:3;margin-left:6px}.lh2{padding-right:14px}
@@ -280,12 +280,15 @@ body.noanim *{animation:none!important;transition:none!important}
     <button class="ib sm" id="nxt" aria-label="Вперёд"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8zM18 4v16"/></svg></button>
     <button class="ib sm" aria-label="Таймер"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4M10 2h4M12 2v3"/></svg></button>
   </div>
-  <div class="ctl2 st" style="--i:5">
+  <div class="quick-actions st" style="--i:5">
+    <button class="quick-action" id="queueBtn" aria-label="Открыть очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg><span>Очередь</span></button>
+    <button class="quick-action" id="playerRepeatBtn" aria-label="Режим повтора"><span class="repeat-icon"></span><span id="playerRepeatLabel"></span></button>
+  </div>
+  <div class="ctl2 st" style="--i:6">
     <button class="ib" aria-label="Устройства"><svg viewBox="0 0 24 24"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg></button>
     <label class="volume-control"><span>Громкость</span><input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label>
     <span style="flex:1"></span>
     <button class="ib" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
-    <button class="ib" id="queueBtn" aria-label="Очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg></button>
   </div>
   <div class="prev st" id="prev" style="--i:6"><b>Предпросмотр текста</b><p id="pv"></p></div>
 </section>
@@ -502,6 +505,9 @@ var sh=gid('sheet'),s2=gid('sh2'),tt;
 function openSh(h){sh.innerHTML='<div class="gr"></div>'+h;sh.classList.add('on');s2.classList.add('on')}
 function closeSh(){sh.classList.remove('on');s2.classList.remove('on')}
 s2.onclick=closeSh;
+gid('playerRepeatBtn').onclick=cycleRepeat;
+gid('queueBtn').onclick=function(){renderQueue();};
+updateRepeatUI(false);
 function toast(m,u){var t=gid('toast');t.innerHTML='<span>'+m+'</span>'+(u?'<u>Отменить</u>':'');t.classList.add('on');t.onclick=u?function(){u();t.classList.remove('on')}:null;clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},3200)}
 function renderL(anim){
   var q=gid('lq').value.trim().toLowerCase(),c=anim?' a':'',d=0,T={1:'p',2:'a',3:'al'};
@@ -545,6 +551,18 @@ function getBlob(id,cb){openDB(function(db){var r=db.transaction('tracks').objec
 var repeatMode=0;try{repeatMode=Math.max(0,Math.min(2,parseInt(localStorage.getItem('kimo_repeat_mode')||'0',10)||0))}catch(e){}
 function repeatLabel(){return ['Выключен','Повтор всего','Повтор трека'][repeatMode]}
 function repeatShortLabel(){return ['Выкл.','Все','Трек'][repeatMode]}
+function updateRepeatUI(animate){
+ ['repeatModeBtn','playerRepeatBtn'].forEach(function(id){
+  var b=gid(id);if(!b)return;
+  b.classList.toggle('active',repeatMode!==0);
+  b.setAttribute('aria-label',repeatLabel());
+  if(id==='repeatModeBtn')b.innerHTML=repeatIcon()+'<b>'+repeatShortLabel()+'</b>';
+  else {b.querySelector('.repeat-icon').innerHTML=repeatIcon();gid('playerRepeatLabel').textContent=repeatShortLabel()}
+  if(animate){b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');b.addEventListener('animationend',function(){b.classList.remove('bump')},{once:true})}
+ });
+}
+function cycleRepeat(){repeatMode=(repeatMode+1)%3;try{localStorage.setItem('kimo_repeat_mode',String(repeatMode))}catch(e){}updateRepeatUI(true);toast('Повтор: '+repeatLabel())}
+
 function repeatIcon(){return repeatMode===2?'<svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/><circle cx="12" cy="12" r="5"/><text x="12" y="15" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">1</text></svg>':'<svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>'+(repeatMode===1?'<path d="M11 10h2v5"/>':'')+'</svg>'}
 var queueIds=[];
 try{queueIds=JSON.parse(localStorage.getItem('kimo_queue')||'[]')}catch(e){queueIds=[]}
@@ -559,7 +577,7 @@ function renderQueue(){
  html+='<h3 style="margin-top:18px">Добавить из медиатеки</h3>';
  html+=tracks.filter(function(t){return t.id!==currentId&&queueIds.indexOf(t.id)<0}).map(function(t){return '<div class="qadd"><span>'+esc(t.title)+' · '+esc(t.artist)+'</span><button data-qadd="'+esc(t.id)+'">Добавить</button></div>'}).join('')||'<div class="qempty">Нет других треков для добавления.</div>';
  openSh(html);
- var repeatButton=gid('repeatModeBtn');if(repeatButton)repeatButton.onclick=function(){repeatMode=(repeatMode+1)%3;try{localStorage.setItem('kimo_repeat_mode',String(repeatMode))}catch(e){}var rb=gid('repeatModeBtn');if(rb){rb.classList.remove('bump');rb.classList.toggle('active',repeatMode!==0);rb.setAttribute('aria-label',repeatLabel());rb.innerHTML=repeatIcon()+'<b>'+repeatShortLabel()+'</b>';void rb.offsetWidth;rb.classList.add('bump');rb.addEventListener('animationend',function(){rb.classList.remove('bump')},{once:true})}toast('Повтор: '+repeatLabel())};
+ var repeatButton=gid('repeatModeBtn');if(repeatButton)repeatButton.onclick=cycleRepeat;
  [].forEach.call(sh.querySelectorAll('[data-qadd]'),function(b){b.onclick=function(){addQueue(b.dataset.qadd);renderQueue()}});
  [].forEach.call(sh.querySelectorAll('[data-qremove]'),function(b){b.onclick=function(){queueIds=queueIds.filter(function(id){return id!==b.dataset.qremove});saveQueue();renderQueue()}});
  [].forEach.call(sh.querySelectorAll('[data-qplay]'),function(b){b.onclick=function(){var id=b.dataset.qplay;queueIds=queueIds.filter(function(x){return x!==id});saveQueue();play(id);renderQueue()}});
