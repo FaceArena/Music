@@ -212,6 +212,7 @@ body.noanim *{animation:none!important;transition:none!important}
 #like,#miniLike{position:relative}
 #like svg,#miniLike svg{transition:transform .25s var(--pop),fill .2s,stroke .2s}
 #like[data-on="1"]{color:#ff5c7a}
+ .volume-control{display:flex;align-items:center;gap:7px;max-width:112px;font-size:10px;color:var(--mute)}.volume-control input{width:72px;accent-color:var(--tx)}
 </style>
 </head>
 <body>
@@ -278,15 +279,16 @@ body.noanim *{animation:none!important;transition:none!important}
   </div>
   <div class="ctl2 st" style="--i:5">
     <button class="ib" aria-label="Устройства"><svg viewBox="0 0 24 24"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg></button>
+    <label class="volume-control"><span>Громкость</span><input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label>
     <span style="flex:1"></span>
     <button class="ib" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
-    <button class="ib" aria-label="Очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg></button>
+    <button class="ib" id="queueBtn" aria-label="Очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg></button>
   </div>
   <div class="prev st" id="prev" style="--i:6"><b>Предпросмотр текста</b><p id="pv"></p></div>
 </section>
 
 <section class="lyr" id="lyr" aria-label="Текст песни">
-  <div class="lh"><button class="ib" id="lclose" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button><div>С тобой<small>Артист А, Артист Б</small></div><button class="ib" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="lh"><button class="ib" id="lclose" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button><div>С тобой<small>Локальная медиатека</small></div><button class="ib" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
   <div class="lw" id="lw"></div>
   <div class="chips"><button class="chp"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>Поделиться</button><button class="chp" id="tr"><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 8 8M12 5c-1 4-4 7-8 8M13 21l4-10 4 10M14.5 18h5"/></svg>Перевести</button></div>
   <div class="scrub" style="margin-top:22px"><div class="trk"><i id="fill2"></i></div><div class="tm"><span id="t1b">0:05</span><span id="t2b">-3:39</span></div></div>
@@ -296,7 +298,7 @@ body.noanim *{animation:none!important;transition:none!important}
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-label="Профиль">
- <div class="dcard a2" style="--k:0"><div class="dpr"><div class="av">А</div><div><b>Ахмад Сайфов</b><span>Мой профиль</span></div></div>
+ <div class="dcard a2" style="--k:0"><div class="dpr"><div class="av">А</div><div><b>Kimo</b><span>Мой профиль</span></div></div>
  <div class="dad"><i><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></i><b>Добавить аккаунт</b></div></div>
  <div class="dit a2" style="--k:1"><svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7 15l4-5 3 3 5-7"/></svg><span>Статистика прослушивания • <em>Новое</em></span></div>
  <div class="dit a2" style="--k:2"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.200M4 4v4h4M12 8v4l3 2"/></svg><span>Недавние</span></div>
@@ -306,9 +308,9 @@ body.noanim *{animation:none!important;transition:none!important}
 <section class="sett" id="sett" aria-label="Настройки">
  <div class="sh"><button class="ib" id="setBack" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Настройки</h1><button class="ib" aria-label="Поиск"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div>
  <div class="tiles a3" style="--k:0"><div class="tile" id="trafT">Режим экономии трафика<span id="trafS">Автоматически</span></div><div class="tile" id="privT">Приватный режим<span id="privS">Выкл.</span></div></div>
- <div class="plan a3" style="--k:1"><span id="planS">Бесплатный аккаунт</span><button id="planBtn">Узнать больше о Плюс</button></div>
+ <div class="plan a3" style="--k:1"><span id="planS">Локальный режим</span><button id="planBtn">Узнать больше о Плюс</button></div>
  <div class="grp">
-  <div class="srow a3" data-set="account" style="--k:3"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.2"/><path d="M6 19c1.5-3 10.5-3 12 0"/></svg><div><b>Аккаунт</b><span id="accS">Ахмад Сайфов • Бесплатный</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="account" style="--k:3"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.2"/><path d="M6 19c1.5-3 10.5-3 12 0"/></svg><div><b>Аккаунт</b><span id="accS">Kimo • Бесплатный</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
   <div class="srow a3" data-set="content" style="--k:4"><svg viewBox="0 0 24 24"><path d="M9 18V5l8 2v3M9 18a3 3 0 1 1-3-3"/></svg><div><b>Контент и внешний вид</b><span id="contS">Контент для взрослых: Разрешён</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
   <div class="srow a3" id="openCust" style="--k:4"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 0 0 3-3c0-5-4-11-8-11z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="10" r="1"/></svg><div><b>Кастомизация</b><span>Цвет акцента • Тема • Оформление</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
  </div>
@@ -328,7 +330,7 @@ body.noanim *{animation:none!important;transition:none!important}
 </section>
 <section class="cust" id="cust" aria-label="Кастомизация">
  <div class="sh"><button class="ib" id="custBack" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Кастомизация</h1><span style="width:38px"></span></div>
- <div class="pvw a3" style="--k:0"><div class="c"></div><div><b>Ночной рейс</b><span>Северный</span></div><button class="chip on">Все</button></div>
+ <div class="pvw a3" style="--k:0"><div class="c"></div><div><b>Kimo</b><span>Локальная медиатека</span></div><button class="chip on">Все</button></div>
  <div class="ch2 a3" style="--k:1">Цвет акцента</div>
  <div class="swc a3" id="swA" style="--k:2"><i data-c="#ff5c7a" class="on" style="background:#ff5c7a"></i><i data-c="#8fa8ff" style="background:#8fa8ff"></i><i data-c="#b69ad6" style="background:#b69ad6"></i><i data-c="#7cd992" style="background:#7cd992"></i><i data-c="#ffb347" style="background:#ffb347"></i><i data-c="#ffd23f" style="background:#ffd23f"></i></div>
  <div class="ch2 a3" style="--k:3">Тема</div>
@@ -505,6 +507,8 @@ function toggle(){if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);e
 function move(dir){var list=window.KIMO_TRACKS||[];if(!list.length)return;var i=list.findIndex(function(t){return t.id===currentId});if(shuffle&&list.length>1){var n=i;while(n===i)n=Math.floor(Math.random()*list.length);i=n}else i=(i+dir+list.length)%list.length;play(list[i].id)}
 gid('pp').onclick=toggle;gid('pb').onclick=toggle;gid('pb2').onclick=toggle;gid('prv').onclick=function(){if(a.currentTime>3)a.currentTime=0;else move(-1)};gid('nxt').onclick=function(){move(1)};
 gid('shuf').onclick=function(){shuffle=!shuffle;this.classList.toggle('g',shuffle)};
+gid('volume').oninput=function(){a.volume=Number(this.value)};a.volume=Number(gid('volume').value);
+gid('queueBtn').onclick=function(){var list=window.KIMO_TRACKS||[];var html='<h3>Очередь воспроизведения</h3>';if(!list.length)html+='<p>Очередь пуста. Добавь аудиофайлы в медиатеку.</p>';else html+=list.map(function(t){return '<div class="sa" data-queue-track="'+esc(t.id)+'"><b>'+(t.id===currentId?'▶ ':'')+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div>'}).join('');openSh(html);[].forEach.call(sh.querySelectorAll('[data-queue-track]'),function(row){row.onclick=function(){play(row.dataset.queueTrack);closeSh()}})};
 gid('close').onclick=function(){gid('player').classList.remove('open');document.body.classList.remove('pushed')};
 document.querySelector('.mini').addEventListener('click',function(e){if(!e.target.closest('button')){gid('player').classList.add('open');document.body.classList.add('pushed')}});
 a.addEventListener('play',function(){playing=true;controls()});a.addEventListener('pause',function(){playing=false;controls()});a.addEventListener('timeupdate',progress);a.addEventListener('loadedmetadata',progress);a.addEventListener('ended',function(){move(1)});
@@ -580,6 +584,7 @@ function updateLikeBtn(animate) {
 
 function toggleLikeCurrent() {
   var id = CUR_TRACK.id;
+  if (!id) { if (typeof toast === 'function') toast('Сначала выбери трек'); return; }
   var idx = LIKES.findIndex(function(x) { return x.id === id; });
   var nowLiked;
   if (idx >= 0) {
@@ -719,7 +724,7 @@ var ST = {
   wifiOnly: true,
   quality: 2, // 0 low, 1 normal, 2 high
   ads: true,
-  devices: 2
+  devices: 1
 };
 try {
   var _st = JSON.parse(localStorage.getItem('pl_st') || 'null');
@@ -742,7 +747,7 @@ function updSettingsUI() {
   var tt = document.getElementById('trafT');
   if (tt) tt.classList.toggle('on', ST.traf === 1);
   var el;
-  el = document.getElementById('accS'); if (el) el.textContent = 'Ахмад Сайфов • ' + (ST.private ? 'Приватный' : 'Бесплатный');
+  el = document.getElementById('accS'); if (el) el.textContent = 'Kimo • ' + (ST.private ? 'Приватный' : 'Бесплатный');
   el = document.getElementById('contS'); if (el) el.textContent = 'Контент для взрослых: ' + (ST.explicit ? 'Разрешён' : 'Запрещён');
   el = document.getElementById('privRowS'); if (el) el.textContent = (ST.private ? 'Приватный режим • ' : '') + (ST.openPl ? 'Открытые плейлисты' : 'Закрытые плейлисты');
   el = document.getElementById('playS'); if (el) el.textContent = (ST.gapless ? 'Без пауз' : 'С паузами') + ' • Кроссфейд ' + (ST.crossfade ? 'вкл.' : 'выкл.');
@@ -753,7 +758,7 @@ function updSettingsUI() {
   var qL = ['Низкое', 'Обычное', 'Высокое'];
   el = document.getElementById('qualS'); if (el) el.textContent = qL[ST.quality] + ' • ' + (ST.wifiOnly ? 'Wi-Fi' : 'Любая сеть');
   el = document.getElementById('adsS'); if (el) el.textContent = 'Персонализированная: ' + (ST.ads ? 'Вкл.' : 'Выкл.');
-  el = document.getElementById('planS'); if (el) el.textContent = ST.private ? 'Приватный режим' : 'Бесплатный аккаунт';
+  el = document.getElementById('planS'); if (el) el.textContent = ST.private ? 'Приватный режим' : 'Локальный режим';
 }
 
 updSettingsUI();
@@ -797,13 +802,13 @@ var setPages = {
   account: function() {
     openSdet('Аккаунт',
       '<div class="grp" style="margin-top:8px">' +
-        '<div class="srow" style="cursor:default"><div class="av" style="width:48px;height:48px;font-size:20px;margin-right:4px">А</div><div><b>Ахмад Сайфов</b><span>ahmad@example.com</span></div></div>' +
+        '<div class="srow" style="cursor:default"><div class="av" style="width:48px;height:48px;font-size:20px;margin-right:4px">А</div><div><b>Kimo</b><span>Не подключено</span></div></div>' +
       '</div>' +
       '<div class="ch2">Профиль</div>' +
       '<div class="grp">' +
-        '<div class="srow" data-act="rename"><div><b>Имя пользователя</b><span>Ахмад Сайфов</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
-        '<div class="srow" data-act="email"><div><b>Электронная почта</b><span>ahmad@example.com</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
-        '<div class="srow" data-act="sub"><div><b>Подписка</b><span>Бесплатный аккаунт</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="rename"><div><b>Имя пользователя</b><span>Kimo</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="email"><div><b>Электронная почта</b><span>Не подключено</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="sub"><div><b>Подписка</b><span>Локальный режим</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
       '</div>' +
       '<div class="ch2">Безопасность</div>' +
       '<div class="grp">' +
@@ -861,7 +866,7 @@ var setPages = {
       '<div class="ch2">Активные устройства</div>' +
       '<div class="grp">' +
         '<div class="srow" style="cursor:default"><div><b>Этот телефон</b><span>Активно сейчас</span></div><em style="color:var(--green);font-style:normal;font-size:13px">●</em></div>' +
-        '<div class="srow" style="cursor:default"><div><b>Браузер Chrome</b><span>2 часа назад</span></div></div>' +
+        '<div class="srow" style="cursor:default"><div><b>Это устройство</b><span>Активно сейчас</span></div></div>' +
       '</div>' +
       '<div class="ch2">Действия</div>' +
       '<div class="grp">' +
@@ -983,7 +988,8 @@ sdetBody.addEventListener('click', function(e) {
     if (a === 'clearhist') { toast('История прослушивания очищена'); return; }
     if (a === 'clearrc') { RC = []; svRC(); toast('Недавние поиски очищены'); return; }
     if (a === 'disconnect') { ST.devices = 1; saveST(); updSettingsUI(); toast('Все устройства отключены'); return; }
-    if (a === 'import' || a === 'rename' || a === 'email' || a === 'sub' || a === 'pass' || a === '2fa' ||
+    if (a === 'import') { document.getElementById('audioFiles').click(); return; }
+    if (a === 'rename' || a === 'email' || a === 'sub' || a === 'pass' || a === '2fa' ||
         a === 'aboutads' || a === 'privacy' || a === 'terms' || a === 'licenses' || a === 'feedback') {
       toast('Скоро будет доступно');
       return;
