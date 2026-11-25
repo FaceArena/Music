@@ -538,10 +538,10 @@ function progress(){var d=a.duration||0,t=a.currentTime||0,p=d?100*t/d:0;['fill'
 function openDB(cb){var r=indexedDB.open('kimo_audio',1);r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('tracks'))r.result.createObjectStore('tracks')};r.onsuccess=function(){cb(r.result)};r.onerror=function(){toast('Хранилище аудио недоступно')}}
 function saveBlob(id,blob,cb){openDB(function(db){var tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(blob,id);tx.oncomplete=function(){db.close();cb(true)};tx.onerror=function(){db.close();cb(false)}})}
 function getBlob(id,cb){openDB(function(db){var r=db.transaction('tracks').objectStore('tracks').get(id);r.onsuccess=function(){var b=r.result;db.close();cb(b)};r.onerror=function(){db.close();cb(null)}})}
-function play(id){var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(!blob){toast('Аудиофайл не найден');return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
+function play(id){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(!blob){toast('Аудиофайл не найден');return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
 window.KIMO_PLAY_TRACK=play;
 window.KIMO_STOP=function(){a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
-function toggle(){if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
+function toggle(){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
 function move(dir){var list=window.KIMO_TRACKS||[];if(!list.length)return;var i=list.findIndex(function(t){return t.id===currentId});if(shuffle&&list.length>1){var n=i;while(n===i)n=Math.floor(Math.random()*list.length);i=n}else i=(i+dir+list.length)%list.length;play(list[i].id)}
 gid('pp').onclick=toggle;gid('pb').onclick=toggle;gid('pb2').onclick=toggle;gid('prv').onclick=function(){if(a.currentTime>3)a.currentTime=0;else move(-1)};gid('nxt').onclick=function(){move(1)};
 gid('shuf').onclick=function(){shuffle=!shuffle;this.classList.toggle('g',shuffle)};
@@ -550,7 +550,25 @@ gid('queueBtn').onclick=function(){var list=window.KIMO_TRACKS||[];var html='<h3
 gid('close').onclick=function(){gid('player').classList.remove('open');document.body.classList.remove('pushed')};
 document.querySelector('.mini').addEventListener('click',function(e){if(!e.target.closest('button')){gid('player').classList.add('open');document.body.classList.add('pushed')}});
 a.addEventListener('play',function(){playing=true;controls()});a.addEventListener('pause',function(){playing=false;controls()});a.addEventListener('timeupdate',progress);a.addEventListener('loadedmetadata',progress);a.addEventListener('ended',function(){move(1)});
-document.querySelectorAll('.scrub').forEach(function(el){el.addEventListener('pointerdown',function(e){if(!a.duration)return;var r=el.getBoundingClientRect();a.currentTime=Math.max(0,Math.min(a.duration,(e.clientX-r.left)/r.width*a.duration))})});
+var seekDrag=null;
+function seekAt(e,el){
+ var bar=el.querySelector('.trk');if(!bar||!a.duration)return;
+ var r=bar.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+ a.currentTime=ratio*a.duration;progress();
+}
+document.querySelectorAll('.scrub').forEach(function(el){
+ el.addEventListener('pointerdown',function(e){
+  if(!a.duration)return;
+  seekDrag=el;
+  try{el.setPointerCapture(e.pointerId)}catch(err){}
+  seekAt(e,el);e.preventDefault();
+ });
+ el.addEventListener('pointermove',function(e){if(seekDrag===el)seekAt(e,el)});
+ function stopSeek(e){if(seekDrag===el){seekAt(e,el);seekDrag=null}}
+ el.addEventListener('pointerup',stopSeek);
+ el.addEventListener('pointercancel',function(){if(seekDrag===el)seekDrag=null});
+ el.addEventListener('lostpointercapture',function(){if(seekDrag===el)seekDrag=null});
+});
 controls();progress();labels();
 })();
 (function(){
@@ -1121,9 +1139,48 @@ bgD.oninput=function(){S.d=+bgD.value;ap()};
 document.addEventListener('visibilitychange',function(){var v=bgm.querySelector('video');if(!v)return;if(document.hidden)v.pause();else{var p=v.play();if(p&&p.catch)p.catch(function(){})}});
 idbGet(function(f){if(f&&f.type)showBg(f)});
 })();
-(function(){var r='',h;for(var i=0;i<48;i++){h=5+Math.round(Math.abs(Math.sin(i*.9)*Math.cos(i*.37))*17);r+='<rect x="'+i*2.5+'" y="'+(12-h/2)+'" width="1.6" height="'+h+'" rx=".8"/>'}
-var u='url("data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" preserveAspectRatio="none">'+r+'</svg>')+'")';
-document.querySelectorAll('.trk').forEach(function(e){e.style.webkitMaskImage=e.style.maskImage=u})})();
+(function(){
+ var bars=48,tracks=[].slice.call(document.querySelectorAll('.trk')),audioCtx=null,analyser=null,source=null,freq=null,frame=0,last=0;
+ function applyWave(values){
+  var r='';
+  for(var i=0;i<bars;i++){
+   var v=values?values[Math.min(values.length-1,Math.floor(i/bars*values.length))]/255:0;
+   var h=values?4+v*37:5+Math.abs(Math.sin(Date.now()/190+i*.72))*17;
+   r+='<rect x="'+(i*2.5+.35)+'" y="'+((44-h)/2)+'" width="1.8" height="'+h.toFixed(1)+'" rx=".9"/>';
+  }
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 44" preserveAspectRatio="none">'+r+'</svg>';
+  var u='url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
+  tracks.forEach(function(el){el.style.webkitMaskImage=u;el.style.maskImage=u});
+ }
+ function setup(){
+  if(analyser)return true;
+  var C=window.AudioContext||window.webkitAudioContext;
+  if(!C)return false;
+  try{
+   audioCtx=new C();analyser=audioCtx.createAnalyser();analyser.fftSize=128;analyser.smoothingTimeConstant=.78;
+   source=audioCtx.createMediaElementSource(a);source.connect(analyser);analyser.connect(audioCtx.destination);
+   freq=new Uint8Array(analyser.frequencyBinCount);return true;
+  }catch(err){analyser=null;return false}
+ }
+ function animate(now){
+  if(a.paused){frame=0;return}
+  if(!last||now-last>65){
+   last=now;
+   if(analyser){analyser.getByteFrequencyData(freq);applyWave(freq)}
+   else applyWave(null);
+  }
+  frame=requestAnimationFrame(animate);
+ }
+ function start(){
+  setup();
+  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(function(){});
+  if(!frame)frame=requestAnimationFrame(animate);
+ }
+ window.KIMO_VISUALIZER_START=start;
+ a.addEventListener('play',start);
+ a.addEventListener('pause',function(){if(frame)cancelAnimationFrame(frame);frame=0});
+ applyWave(null);
+})();
 </script>
 </body>
 </html>
