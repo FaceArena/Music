@@ -73,8 +73,9 @@ h2{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:34px 20px 12px}
 .meta{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex:none}
 .ttl{font-size:clamp(24px,7vw,30px);font-weight:600;letter-spacing:-.03em}.ar{font-size:16px;color:var(--mute);margin-top:2px}
 .scrub{margin-top:14px;padding:6px 0 0;touch-action:none;flex:none;cursor:pointer}
-.trk{height:44px;background:#f4f2ee47;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
-.trk i{display:block;height:100%;width:2%;background:var(--tx)}
+.trk{height:44px;position:relative;overflow:hidden;background:none}
+.trk svg{display:block;width:100%;height:100%;overflow:visible}
+.trk i{display:none}
 .tm{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:6px;font-variant-numeric:tabular-nums}
 .ctl{display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex:none}
 .ctl2{display:flex;justify-content:space-between;align-items:center;margin-top:4px;flex:none}
@@ -1142,10 +1143,10 @@ idbGet(function(f){if(f&&f.type)showBg(f)});
 (function(){
  var audio=document.getElementById('audio');
  var bars=48,tracks=[].slice.call(document.querySelectorAll('.trk')),frame=0;
- var audioCtx=null,analyser=null,source=null,spectrum=null;
+ var audioCtx=null,analyser=null,source=null,spectrum=null,graphReady=false;
  function setup(){
   var Ctx=window.AudioContext||window.webkitAudioContext;
-  if(!Ctx||!audio)return false;
+  if(!Ctx||!audio)return Promise.resolve(false);
   try{
    if(!audioCtx){
     audioCtx=new Ctx();
@@ -1156,18 +1157,22 @@ idbGet(function(f){if(f&&f.type)showBg(f)});
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
     spectrum=new Uint8Array(analyser.frequencyBinCount);
+    graphReady=true;
    }
-   if(audioCtx.state==='suspended'){
-    var resume=audioCtx.resume();
-    if(resume&&resume.catch)resume.catch(function(){});
+   if(audioCtx.state==='suspended')return audioCtx.resume().then(function(){return true},function(){return false});
+   return Promise.resolve(audioCtx.state==='running');
+  }catch(err){
+   if(source&&audioCtx){
+    try{source.disconnect();source.connect(audioCtx.destination)}catch(ignore){}
    }
-   return true;
-  }catch(err){return false}
+   graphReady=false;
+   return Promise.resolve(false);
+  }
  }
  window.KIMO_VISUALIZER_START=setup;
  function draw(){
-  var values=[];
-  if(analyser&&spectrum&&audio&&!audio.paused){
+  var values=[],active=!!(graphReady&&analyser&&spectrum&&audio&&!audio.paused&&audioCtx&&audioCtx.state==='running');
+  if(active){
    analyser.getByteFrequencyData(spectrum);
    for(var i=0;i<bars;i++){
     var from=Math.floor(Math.pow(i/bars,1.65)*spectrum.length);
@@ -1178,30 +1183,33 @@ idbGet(function(f){if(f&&f.type)showBg(f)});
     values[i]=count?sum/count/255:0;
    }
   }
+  var duration=audio&&isFinite(audio.duration)?audio.duration:0;
+  var ratio=duration?audio.currentTime/duration:0;
   var r='';
   for(var k=0;k<bars;k++){
    var base=5+Math.round(Math.abs(Math.sin(k*.9)*Math.cos(k*.37))*17);
-   var amp=values.length?values[k]:0;
-   var h=values.length?Math.max(2.5,Math.min(23,2.5+amp*20)):base;
-   r+='<rect x="'+(k*2.5)+'" y="'+(12-h/2).toFixed(1)+'" width="1.6" height="'+h.toFixed(1)+'" rx=".8"/>';
+   var amp=active?values[k]:0;
+   var h=active?Math.max(2.5,Math.min(23,2.5+amp*20)):base;
+   var fill=(k+.5)/bars<=ratio?'#f4f2ee':'#f4f2ee47';
+   r+='<rect x="'+(k*2.5)+'" y="'+(12-h/2).toFixed(1)+'" width="1.6" height="'+h.toFixed(1)+'" rx=".8" fill="'+fill+'"/>';
   }
   var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" preserveAspectRatio="none">'+r+'</svg>';
-  var u='url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
-  tracks.forEach(function(el){el.style.webkitMaskImage=u;el.style.maskImage=u});
+  tracks.forEach(function(el){el.innerHTML=svg});
  }
  function animate(){
   if(!audio||audio.paused){frame=0;draw();return}
   draw();
   frame=requestAnimationFrame(animate);
  }
- function start(){setup();if(!frame)frame=requestAnimationFrame(animate)}
+ function start(){if(!frame)frame=requestAnimationFrame(animate)}
  if(audio){
   audio.addEventListener('play',start);
   audio.addEventListener('pause',function(){if(frame)cancelAnimationFrame(frame);frame=0;draw()});
   audio.addEventListener('ended',function(){if(frame)cancelAnimationFrame(frame);frame=0;draw()});
+  audio.addEventListener('timeupdate',draw);
  }
  draw();
-})();;
+})();;;
 </script>
 </body>
 </html>
