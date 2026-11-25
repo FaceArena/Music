@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Плеер</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f11;--tx:#f4f2ee;--mute:#f4f2ee8c;--sf:#ffffff0e;--sf2:#ffffff1a;--ln:#ffffff12;--green:#ff5c7a;--tk:#222d52;--rad:12px;--sp:cubic-bezier(.32,.72,0,1);--pop:cubic-bezier(.3,1.35,.5,1);color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:Onest,-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-weight:500;-webkit-font-smoothing:antialiased}
+body{max-width:480px;margin:0 auto;min-height:100vh;padding:calc(env(safe-area-inset-top,0px) + 12px) 0 200px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.ib,.chip,.chp,.pb,.cancel,.plan button,.exit,.go,.tile{transition:transform .45s var(--pop),background .25s,color .25s}
+.ib:active,.chip:active,.chp:active,.pb:active,.exit:active,.go:active,.plan button:active{transform:scale(.9);transition-duration:.12s}
+.hd,.lh2{display:flex;align-items:center;gap:6px;padding:4px 20px 0}
+.hd h1,.lh2 h1{flex:1;margin:0;font-size:32px;font-weight:600;letter-spacing:-.035em}
+.lh2 .av{order:3;margin-left:6px}.lh2{padding-right:14px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--tx);color:var(--bg);display:grid;place-items:center;font-size:15px;font-weight:600;cursor:pointer;flex:none}
+.top{display:flex;gap:8px;padding:0 16px 6px;align-items:center;overflow-x:auto;scrollbar-width:none}
+.chip{border:0;border-radius:99px;padding:8px 14px;background:var(--sf);color:var(--tx);font-size:13px;font-weight:600;flex:none}
+.chip.on{background:var(--tx);color:var(--bg)}
+h2{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:34px 20px 12px}
+.row{display:flex;gap:12px;overflow-x:auto;padding:0 20px;scrollbar-width:none;scroll-snap-type:x mandatory;scroll-padding:0 20px}
+.row::-webkit-scrollbar{display:none}
+.card{flex:0 0 148px;scroll-snap-align:start}
+.cover{width:148px;height:148px;border-radius:var(--rad);position:relative;overflow:hidden;color:#101012;transition:transform .5s var(--pop)}
+.card:active .cover{transform:scale(.95);transition-duration:.12s}
+.cover.rd{border-radius:50%;display:grid;place-items:center;font-size:44px;font-weight:600}
+.cover.tp span{position:absolute;left:14px;bottom:12px;right:12px;font-size:22px;line-height:1;font-weight:600;letter-spacing:-.04em}
+.mk{position:absolute;background:#101012}.mk.cr{background:var(--tx)}
+.m0{width:42%;aspect-ratio:1;border-radius:50%;right:14px;top:14px}
+.m1{width:100%;height:36%;left:0;bottom:0;border-radius:50% 50% 0 0/100% 100% 0 0}
+.m2{width:14px;height:46%;left:20px;top:0}
+.card p{margin:9px 0 0;font-size:13px;line-height:1.3;color:var(--mute)}
+.card b{display:block;color:var(--tx);font-size:14px;font-weight:600}
+.mini{position:fixed;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));bottom:calc(env(safe-area-inset-bottom,0px) + 92px);background:#1b1b1fcc;backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border-radius:22px;padding:8px 10px 8px 8px;display:flex;align-items:center;gap:10px;z-index:5;cursor:pointer;box-shadow:inset 0 0 0 1px var(--ln)}
+.mini .art{width:44px;height:44px;border-radius:12px;background:var(--tk);position:relative;flex:none}
+.mini .art:after{content:"";position:absolute;left:50%;top:26%;width:30%;aspect-ratio:1;margin-left:-15%;border-radius:50%;background:var(--tx)}
+.mini .t{flex:1;min-width:0}.mini .t b{display:block;font-size:15px;font-weight:600}.mini .t span{font-size:13px;color:var(--mute)}
+.mini button{background:none;border:0;color:var(--tx);padding:6px;display:grid;place-items:center}.mini .t+button{display:none}.mini svg{width:24px;height:24px}
+.bar-prog{position:absolute;left:16px;right:16px;bottom:0;height:2px;border-radius:2px;background:#ffffff22}
+.bar-prog i{display:block;height:100%;width:12%;border-radius:2px;background:var(--tx);transition:width 1s linear}
+.dock{position:fixed;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));bottom:calc(env(safe-area-inset-bottom,0px) + 12px);height:68px;border-radius:34px;z-index:10;touch-action:none;user-select:none;-webkit-user-select:none;background:#1b1b1fb3;backdrop-filter:blur(28px) saturate(1.8);-webkit-backdrop-filter:blur(28px) saturate(1.8);box-shadow:inset 0 0 0 1px #ffffff1c,0 10px 30px #0007}
+.lens{position:absolute;top:5px;bottom:5px;left:0;border-radius:29px;pointer-events:none;will-change:transform;background:#ffffff1f;backdrop-filter:blur(2px) saturate(2) brightness(1.2);-webkit-backdrop-filter:blur(2px) saturate(2) brightness(1.2);box-shadow:inset 0 0 0 1px #ffffff2e;transition:background .25s}
+.dock.drag .lens{background:#ffffff2e}
+.tabs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mute);font-size:11px;transition:color .2s,transform .4s var(--pop)}
+.tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke-width .3s}
+.tab.on{color:var(--tx)}.tab.on svg{stroke-width:2.4}.dock.drag .tab.on{transform:scale(1.08)}
+.player,.lyr{position:fixed;top:0;bottom:0;left:50%;width:min(480px,100%);transform:translate(-50%,100%);z-index:20;transition:transform .65s var(--sp),border-radius .65s;overflow:hidden;display:flex;flex-direction:column;border-radius:34px 34px 0 0;background:var(--tk)}
+.player{padding:calc(env(safe-area-inset-top,0px) + 10px) 24px calc(env(safe-area-inset-bottom,0px) + 16px);touch-action:none}
+.lyr{z-index:30;padding:calc(env(safe-area-inset-top,0px) + 10px) 24px calc(env(safe-area-inset-bottom,0px) + 18px)}
+.player.open,.lyr.open{transform:translate(-50%,0);border-radius:0}
+.st{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .8s var(--sp)}
+.player.open .st{opacity:1;transform:none;transition-delay:calc(var(--i)*70ms + 180ms)}
+.ph,.lh{display:flex;align-items:center;justify-content:space-between;height:48px;flex:none}
+.pt,.lh{font-size:15px;font-weight:600}.lh{text-align:center;line-height:1.25}.lh small{display:block;font-size:13px;font-weight:500;color:var(--mute)}
+.ib{background:none;border:0;color:var(--tx);width:44px;height:44px;display:grid;place-items:center;padding:0}
+.ib svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ib.big svg{width:34px;height:34px;stroke-width:1.7}.ib.g{color:var(--green)}
+#prv svg,#nxt svg{fill:currentColor}
+.art2{width:min(100%,34dvh);aspect-ratio:1;margin:10px auto 0;border-radius:calc(var(--rad) + 6px);position:relative;overflow:hidden;flex:none;background:#2c3a6b;box-shadow:0 18px 40px #0005;transform:scale(.78);opacity:0;transition:transform .9s var(--pop) .15s,opacity .5s .15s}
+.player.open .art2{transform:scale(1);opacity:1}
+.player.open.paused .art2{transform:scale(.88);transition:transform .6s var(--pop)}
+.art2 .hill{position:absolute;left:0;right:0;top:60%;bottom:0;background:#1d2850}
+.art2 .moon{position:absolute;left:50%;top:20%;width:22%;aspect-ratio:1;margin-left:-11%;border-radius:50%;background:var(--tx)}
+.art2 .glow{position:absolute;left:50%;top:68%;width:14%;height:2.5%;margin-left:-7%;border-radius:3px;background:var(--tx);opacity:.45}
+.art2 .p1,.art2 .p2{display:none}
+.cur{font-size:clamp(18px,5vw,22px);font-weight:500;letter-spacing:-.02em;margin:16px 0 0;min-height:30px;line-height:1.25;flex:none}
+.cur.sw{animation:swp .6s var(--sp)}@keyframes swp{from{opacity:0;transform:translateY(12px)}}
+.meta{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex:none}
+.ttl{font-size:clamp(24px,7vw,30px);font-weight:600;letter-spacing:-.03em}.ar{font-size:16px;color:var(--mute);margin-top:2px}
+.scrub{margin-top:14px;padding:6px 0 0;touch-action:none;flex:none;cursor:pointer}
+.trk{height:44px;background:#f4f2ee47;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+.trk i{display:block;height:100%;width:2%;background:var(--tx)}
+.tm{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:6px;font-variant-numeric:tabular-nums}
+.ctl{display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex:none}
+.ctl2{display:flex;justify-content:space-between;align-items:center;margin-top:4px;flex:none}
+.ctl .ib.sm svg{width:28px;height:28px}
+.pb{width:72px;height:72px;border-radius:26px;border:0;background:var(--tx);display:grid;place-items:center;padding:0}
+.pb svg{width:30px;height:30px;fill:var(--bg)}
+.prev{margin:auto 0 0;padding:16px 18px 18px;background:var(--sf2);border-radius:24px;flex:none;cursor:pointer}
+.prev b{font-size:13px;font-weight:500;color:var(--mute);display:block}.prev p{margin:8px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em;line-height:1.25}
+.lw{flex:1;overflow-y:auto;margin:10px -24px 0;padding:10px 24px 120px;-webkit-mask-image:linear-gradient(#0000,#000 8%,#000 80%,#0000);mask-image:linear-gradient(#0000,#000 8%,#000 80%,#0000);scrollbar-width:none}
+.lw::-webkit-scrollbar{display:none}
+.l{font-size:clamp(26px,7.6vw,34px);line-height:1.15;letter-spacing:-.03em;font-weight:600;margin:0 0 22px;color:#f4f2ee4d;transform:scale(.93);transform-origin:left center;filter:blur(.6px);transition:color .5s,transform .7s var(--pop),filter .5s;cursor:pointer}
+.l.on{color:var(--tx);transform:none;filter:none}
+.chips{display:flex;gap:8px;flex:none;margin-top:6px}
+.chp{border:0;border-radius:99px;padding:11px 16px;background:var(--sf2);color:var(--tx);font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center}
+.chp svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chp.act{background:var(--tx);color:var(--bg)}
+.lyr .pb{margin:14px auto 0;flex:none}
+.page{display:none}.page.on{display:block}
+.pin{animation:pin .55s var(--sp)}@keyframes pin{from{opacity:0;transform:translateY(14px)}}
+#home,#lib,#search,#stub{transform-origin:50% 0;transition:transform .6s var(--sp),opacity .6s}
+body.dshift #home,body.dshift #lib,body.dshift #search{transform:translateX(30px)}
+body.pushed #home,body.pushed #lib,body.pushed #search,body.pushed #stub{transform:scale(.94);opacity:.45}
+.sbar{display:flex;gap:10px;padding:4px 16px 10px;align-items:center}
+.sin{flex:1;min-width:0;display:flex;align-items:center;background:var(--sf2);border-radius:14px;height:42px;padding:0 10px 0 14px}
+.sin input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--tx);font:inherit;font-size:16px}
+.sin button{border:0;background:#f4f2ee66;color:var(--bg);width:20px;height:20px;border-radius:50%;display:grid;place-items:center;padding:0;flex:none}
+.cancel{border:0;background:none;color:var(--green);font-size:16px;padding:0 4px}
+.sg{display:flex;align-items:center;gap:14px;padding:11px 20px;font-size:16px;cursor:pointer;transition:background .2s}.sg:active{background:var(--sf)}
+.sg span{flex:1}.sg svg{width:20px;height:20px;fill:none;stroke:var(--mute);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sg .rx{background:none;border:0;padding:4px;display:grid;place-items:center}.sg .rx svg{width:16px;height:16px}
+.rch{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 4px;font-size:15px;font-weight:600}.rch button{background:none;border:0;color:var(--mute);font-size:13px}
+.rs{display:flex;align-items:center;gap:12px;padding:7px 20px}.av2{width:50px;height:50px;flex:none;border-radius:var(--rad)}
+.rt{flex:1;min-width:0}.rt b{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.rt span{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eb{font-style:normal;background:#f4f2ee59;color:var(--bg);border-radius:3px;width:16px;height:16px;display:inline-grid;place-items:center;font-size:10px;font-weight:600;flex:none}
+.rs .ib{width:36px;height:36px}.rs .ib svg{width:22px;height:22px}
+.a{animation:rin .55s var(--sp) both;animation-delay:calc(var(--d)*35ms)}@keyframes rin{from{opacity:0;transform:translateY(10px)}}
+mark{background:none;color:var(--green)}
+.empty{padding:30px 20px;color:var(--mute);font-size:15px}
+#stubt{margin:120px 28px;font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
+.lqw{display:none;padding:12px 16px 0}.lqw.on{display:block;animation:pin .3s}
+.lqw input{width:100%;height:42px;border:0;border-radius:14px;background:var(--sf2);color:var(--tx);font:inherit;font-size:16px;padding:0 14px;outline:0}
+.sortrow{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 6px}
+.sortrow button{background:none;border:0;color:var(--mute);font-size:14px;display:flex;align-items:center;gap:8px;padding:0}
+.sortrow svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.li{display:flex;align-items:center;gap:14px;padding:7px 20px;cursor:pointer;transition:background .2s}.li:active{background:var(--sf)}
+.li .c{width:56px;height:56px;flex:none;display:grid;place-items:center;border-radius:var(--rad)}.li .c.ar{border-radius:50%}
+.li .c svg{width:40%;height:40%;fill:none;stroke:var(--mute);stroke-width:1.6;stroke-linecap:round}
+.li.add .c{background:var(--sf2)}
+.lt{min-width:0}.lt b{display:block;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.lt span{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:13px;margin-top:2px}.lt svg{width:14px;height:14px;flex:none}
+.ll.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 10px;padding:8px 20px}
+.ll.grid .li{flex-direction:column;align-items:flex-start;padding:0;gap:8px}.ll.grid .c{width:100%;height:auto;aspect-ratio:1}
+.ll.grid .lt b{font-size:14px}.ll.grid .lt span{font-size:12px}
+.scrim,.scrim2{position:fixed;inset:0;background:#0008;opacity:0;pointer-events:none;transition:opacity .4s;z-index:40}.scrim2{z-index:60}
+.scrim.on,.scrim2.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(78%,320px);background:#18181b;z-index:41;transform:translateX(-102%);transition:transform .55s var(--sp);padding:calc(env(safe-area-inset-top,0px) + 48px) 10px 20px;border-radius:0 28px 28px 0}
+.drawer.on{transform:none}
+.dcard{background:var(--sf);border-radius:20px;overflow:hidden}
+.dpr,.dad{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;transition:background .2s}
+.dpr:active,.dad:active,.dit:active,.srow:active{background:var(--sf)}
+.dpr .av{width:48px;height:48px;font-size:20px}.dpr b{display:block;font-size:17px;font-weight:600}.dpr span{color:var(--mute);font-size:13px}
+.dad{border-top:1px solid var(--ln)}.dad i{width:36px;height:36px;border-radius:50%;background:var(--sf2);display:grid;place-items:center;font-style:normal}.dad b{font-size:15px;font-weight:500}
+.dit{display:flex;align-items:center;gap:14px;padding:14px 10px;font-size:15px;cursor:pointer;border-radius:14px;transition:background .2s}
+.dit svg,.dad svg{width:22px;height:22px;fill:none;stroke:var(--tx);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.dit em{font-style:normal;color:var(--green)}
+.drawer .a2{opacity:0;transform:translateX(-22px);transition:opacity .4s,transform .55s var(--sp);transition-delay:calc(var(--k)*55ms + 120ms)}
+.drawer.on .a2{opacity:1;transform:none}
+.sett,.cust,.sdet{position:fixed;top:0;bottom:0;left:50%;width:min(480px,100%);background:var(--bg);z-index:42;transform:translate(calc(-50% + 100%),0);visibility:hidden;transition:transform .55s var(--sp),visibility 0s .55s;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 8px) 0 150px}
+.cust{z-index:43}.sdet{z-index:44}
+.sett.on,.cust.on,.sdet.on{transform:translate(-50%,0);visibility:visible;transition:transform .55s var(--sp)}
+.sett .a3,.cust .a3,.sdet .a3{opacity:0;transform:translateY(14px)}
+.sett.on .a3,.cust.on .a3,.sdet.on .a3{animation:sin .6s var(--sp) both;animation-delay:calc(var(--k)*40ms + 160ms)}
+@keyframes sin{to{opacity:1;transform:none}}
+.sh{display:flex;align-items:center;justify-content:space-between;padding:0 8px 6px;position:sticky;top:0;background:var(--bg);z-index:2}
+.sh h1{margin:0;font-size:17px;font-weight:600}.sh .ib{width:40px;height:40px}.sh .ib svg{width:22px;height:22px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 16px 0}
+.tile{background:var(--sf);border-radius:18px;padding:16px 12px;font-size:14px;font-weight:600;cursor:pointer}.tile:active{transform:scale(.96)}
+.tile span{display:block;color:var(--mute);margin-top:4px;font-weight:500;font-size:13px}.tile.on span{color:var(--green)}
+.plan{display:flex;align-items:center;justify-content:space-between;padding:22px 20px 10px;font-size:15px;font-weight:600}
+.plan button{border:0;border-radius:99px;background:var(--tx);color:var(--bg);font-size:13px;font-weight:600;padding:10px 14px}
+.grp{margin:12px 16px 0;background:var(--sf);border-radius:20px;overflow:hidden}
+.srow{display:flex;align-items:center;gap:14px;padding:13px 14px;cursor:pointer;transition:background .2s;position:relative}
+.srow+.srow:before{content:"";position:absolute;top:0;left:50px;right:0;height:1px;background:var(--ln)}
+.srow>svg{width:22px;height:22px;fill:none;stroke:var(--tx);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.srow div{flex:1;min-width:0}.srow b{display:block;font-size:15px;font-weight:600}
+.srow span{display:block;color:var(--mute);font-size:13px;margin-top:2px;line-height:1.3}.srow .ch{width:16px;height:16px;stroke:var(--mute);stroke-width:2.2}
+.exit{display:block;margin:22px auto 0;border:0;border-radius:99px;background:var(--sf2);color:var(--green);font-size:15px;font-weight:600;padding:13px 40px}
+.ch2{margin:22px 20px 8px;font-size:13px;color:var(--mute)}
+.swc{display:flex;gap:12px;padding:6px 20px;flex-wrap:wrap}
+.swc i{width:34px;height:34px;border-radius:50%;transition:box-shadow .3s,transform .5s var(--pop);cursor:pointer}
+.swc i.on{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--tx);transform:scale(1.08)}
+.opt{display:flex;gap:4px;margin:0 16px;padding:3px;background:var(--sf);border-radius:12px}
+.opt button{flex:1;border:0;border-radius:9px;padding:9px 4px;background:none;color:var(--mute);font-size:13px;font-weight:600;transition:background .3s,color .3s}
+.opt button.on{background:var(--sf2);color:var(--tx)}
+.tg{display:flex;align-items:center;justify-content:space-between;margin:18px 16px 0;padding:10px 14px;background:var(--sf);border-radius:16px;font-size:15px;cursor:pointer}
+.tg u{width:51px;height:31px;border-radius:99px;background:#f4f2ee33;position:relative;transition:background .3s}
+.tg u:after{content:"";position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px #0004;transition:transform .5s var(--pop)}
+.tg.on u{background:var(--green)}.tg.on u:after{transform:translateX(20px)}
+.pvw{margin:8px 16px 0;padding:12px;border-radius:18px;background:var(--sf);display:flex;align-items:center;gap:12px}
+.pvw .c{width:52px;height:52px;border-radius:var(--rad);background:var(--green);transition:border-radius .5s var(--pop),background .3s}
+.pvw b{font-size:15px;font-weight:600;display:block}.pvw span{font-size:12px;color:var(--mute)}.pvw .chip{margin-left:auto}
+.sheet{position:fixed;left:50%;bottom:0;width:min(480px,100%);transform:translate(-50%,105%);background:#1c1c20;border-radius:30px 30px 0 0;z-index:61;padding:8px 10px calc(env(safe-area-inset-bottom,0px) + 16px);transition:transform .55s var(--sp)}.sheet.on{transform:translate(-50%,0)}
+.sheet .gr{width:36px;height:5px;border-radius:3px;background:#f4f2ee40;margin:4px auto 12px}.sheet h3{margin:4px 12px 8px;font-size:15px;font-weight:600}
+.sa{display:flex;gap:14px;align-items:center;padding:13px 12px;font-size:15px;border-radius:14px;cursor:pointer;transition:background .2s}.sa:active{background:var(--sf2)}
+.sa svg{width:22px;height:22px;fill:none;stroke:var(--tx);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sa b{font-weight:500}.sa.on b{color:var(--green)}.sa.red{color:#ff6b6b}.sa.red svg{stroke:#ff6b6b}
+.sheet input{width:calc(100% - 24px);margin:4px 12px 14px;height:46px;border:0;border-radius:14px;background:var(--sf2);color:var(--tx);font:inherit;font-size:16px;padding:0 14px;outline:0}
+.sheet .go{display:block;margin:0 auto;border:0;border-radius:99px;background:var(--tx);color:var(--bg);font-size:15px;font-weight:600;padding:12px 30px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 170px);transform:translate(-50%,16px) scale(.92);opacity:0;background:var(--tx);color:#101012;border-radius:99px;padding:11px 18px;font-size:14px;font-weight:600;z-index:70;transition:opacity .3s,transform .55s var(--pop);display:flex;gap:14px;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}.toast u{color:#d6335a;text-decoration:none}
+/* фон: фото / видео */
+.bgm{position:fixed;inset:0;z-index:-1;pointer-events:none;display:none;background:var(--bg);overflow:hidden}
+body.hasbg .bgm{display:block}
+.bgm img,.bgm video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bgm:after{content:"";position:absolute;inset:0;background:#000;opacity:var(--dim,.4)}
+.bgr{display:flex;align-items:center;gap:12px;margin:0 16px;padding:10px;background:var(--sf);border-radius:16px}
+.bgt{width:52px;height:52px;flex:none;border-radius:var(--rad);background:var(--sf2);overflow:hidden;position:relative;display:grid;place-items:center;color:var(--mute)}
+.bgt img,.bgt video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bgt svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bgr .tx2{flex:1;min-width:0}.bgr .tx2 b{display:block;font-size:15px;font-weight:600}.bgr .tx2 span{font-size:12px;color:var(--mute);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bgr .chip{padding:9px 14px}.bgr [hidden]{display:none}
+.sld{display:none;align-items:center;gap:14px;margin:10px 16px 0;padding:12px 14px;background:var(--sf);border-radius:16px;font-size:15px}
+body.hasbg .sld{display:flex}
+.sld span{flex:none}.sld input{flex:1;min-width:0;accent-color:var(--green);height:28px;margin:0}
+.bgc{position:absolute;inset:0;z-index:-1;display:none;overflow:hidden;border-radius:inherit;pointer-events:none}
+body.hasbg .bgc{display:block}
+.bgc img,.bgc video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bgc:after{content:"";position:absolute;inset:0;background:#000;opacity:min(1,calc(var(--dim,.4) + .2))}
+.sett>.bgc,.cust>.bgc,.sdet>.bgc{position:sticky;top:0;bottom:auto;height:100vh;height:100dvh;margin-bottom:-100vh;margin-bottom:-100dvh;border-radius:0}
+body.hasbg .sh{background:#0000;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+body.noanim *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+#like,#miniLike{position:relative}
+#like svg,#miniLike svg{transition:transform .25s var(--pop),fill .2s,stroke .2s}
+#like[data-on="1"]{color:#ff5c7a}
+</style>
+</head>
+<body>
+<div class="bgm" id="bgm" aria-hidden="true"></div>
+<div id="home"><div class="hd"><h1>Главная</h1><div class="av">А</div></div>
+
+<h2>Лучшие треки</h2>
+<div class="row" id="r1"></div>
+<h2>Популярные альбомы и синглы</h2>
+<div class="row" id="r2"></div>
+<h2>Любимые исполнители</h2>
+<div class="row" id="r3"></div>
+</div>
+
+<div id="search" class="page">
+  <div class="sbar"><div class="sin"><input id="q" value="" autocomplete="off" spellcheck="false" placeholder="Исполнители, треки" aria-label="Поиск"><button id="qx" aria-label="Очистить"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><button class="cancel" id="cancel">Отмена</button></div>
+  <div class="top" id="schips" style="display:none"><button class="chip on" data-f="0">Все</button><button class="chip" data-f="1">Треки</button><button class="chip" data-f="2">Исполнители</button></div>
+  <div id="sug"></div>
+  <div id="res"></div>
+</div>
+<div id="lib" class="page">
+  <div class="lh2"><div class="av">A</div><h1>Медиатека</h1><button class="ib" id="lsb" aria-label="Поиск"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button><button class="ib" id="lpl" aria-label="Создать плейлист"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></button></div>
+  <div class="lqw" id="lqw"><input id="lq" placeholder="Найти в медиатеке" autocomplete="off"></div>
+  <div class="top" id="lchips" style="margin-top:18px"><button class="chip" data-f="1">Плейлисты</button><button class="chip" data-f="2">Исполнители</button><button class="chip" data-f="3">Альбомы</button></div>
+  <div class="sortrow"><button id="lsort"><svg viewBox="0 0 24 24"><path d="M4 12h16M8 7l4-4 4 4M8 17l4 4 4-4"/></svg><span id="lsl">Недавние</span></button><button id="lgrid" aria-label="Вид"><svg viewBox="0 0 24 24" id="lgi"></svg></button></div>
+  <div class="ll" id="ll"></div>
+</div>
+<div id="stub" class="page"><p id="stubt"></p></div>
+<div id="likes" class="page">
+  <div class="hd"><h1>Лайки</h1><div class="av">А</div></div>
+  <div class="sortrow" style="padding-top:8px">
+    <button id="likesSort"><svg viewBox="0 0 24 24"><path d="M4 12h16M8 7l4-4 4 4M8 17l4 4 4-4"/></svg><span id="likesSortL">Недавние</span></button>
+    <span id="likesCount" style="font-size:13px;color:var(--mute);padding-right:4px">0 треков</span>
+  </div>
+  <div class="ll" id="likesList"></div>
+  <div class="empty" id="likesEmpty" style="display:none;text-align:center;padding:60px 30px">
+    <div style="font-size:48px;margin-bottom:12px;opacity:.4">♥</div>
+    <div style="font-size:17px;font-weight:600;margin-bottom:6px">Пока нет лайков</div>
+    <div style="font-size:14px;color:var(--mute)">Нажми сердечко в плеере, чтобы добавить трек сюда</div>
+  </div>
+</div>
+
+<div class="mini">
+  <div class="art"></div>
+  <div class="t"><b>Ночной рейс</b><span>Северный</span></div>
+  <button aria-label="Устройства"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg></button>
+  <button id="miniLike" aria-label="Лайк"><svg viewBox="0 0 24 24" id="miniLikei" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg></button>
+  <button id="pp" aria-label="Играть"><svg viewBox="0 0 24 24" fill="#fff" id="ppi"><path d="M7 4l13 8-13 8z"/></svg></button>
+  <div class="bar-prog"><i id="pg"></i></div>
+</div>
+
+<section class="player paused" id="player" aria-label="Сейчас играет">
+  <div class="ph"><button class="ib" id="close" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button><div class="pt">С тобой</div><button class="ib" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="art2"><div class="moon"></div><div class="glow"></div><div class="hill"></div><div class="p1"></div><div class="p2"></div></div>
+  <div class="cur st" id="cur" style="--i:1"></div>
+  <div class="meta st" style="--i:2"><div><div class="ttl">С тобой</div><div class="ar">Артист А, Артист Б</div></div><button class="ib big" id="like" aria-label="Лайк"><svg viewBox="0 0 24 24" id="likei" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg></button></div>
+  <div class="scrub st" style="--i:3"><div class="trk"><i id="fill"></i></div><div class="tm"><span id="t1">0:05</span><span id="t2">-3:39</span></div></div>
+  <div class="ctl st" style="--i:4">
+    <button class="ib sm g" id="shuf" aria-label="Перемешать"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+    <button class="ib sm" id="prv" aria-label="Назад"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 20L9 12l10-8zM6 4v16"/></svg></button>
+    <button class="pb" id="pb" aria-label="Играть"><svg viewBox="0 0 24 24"></svg></button>
+    <button class="ib sm" id="nxt" aria-label="Вперёд"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8zM18 4v16"/></svg></button>
+    <button class="ib sm" aria-label="Таймер"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4M10 2h4M12 2v3"/></svg></button>
+  </div>
+  <div class="ctl2 st" style="--i:5">
+    <button class="ib" aria-label="Устройства"><svg viewBox="0 0 24 24"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg></button>
+    <span style="flex:1"></span>
+    <button class="ib" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
+    <button class="ib" aria-label="Очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg></button>
+  </div>
+  <div class="prev st" id="prev" style="--i:6"><b>Предпросмотр текста</b><p id="pv"></p></div>
+</section>
+
+<section class="lyr" id="lyr" aria-label="Текст песни">
+  <div class="lh"><button class="ib" id="lclose" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button><div>С тобой<small>Артист А, Артист Б</small></div><button class="ib" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="lw" id="lw"></div>
+  <div class="chips"><button class="chp"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>Поделиться</button><button class="chp" id="tr"><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 8 8M12 5c-1 4-4 7-8 8M13 21l4-10 4 10M14.5 18h5"/></svg>Перевести</button></div>
+  <div class="scrub" style="margin-top:22px"><div class="trk"><i id="fill2"></i></div><div class="tm"><span id="t1b">0:05</span><span id="t2b">-3:39</span></div></div>
+  <button class="pb" id="pb2" aria-label="Играть"><svg viewBox="0 0 24 24"></svg></button>
+</section>
+
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Профиль">
+ <div class="dcard a2" style="--k:0"><div class="dpr"><div class="av">А</div><div><b>Ахмад Сайфов</b><span>Мой профиль</span></div></div>
+ <div class="dad"><i><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></i><b>Добавить аккаунт</b></div></div>
+ <div class="dit a2" style="--k:1"><svg viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7 15l4-5 3 3 5-7"/></svg><span>Статистика прослушивания • <em>Новое</em></span></div>
+ <div class="dit a2" style="--k:2"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.200M4 4v4h4M12 8v4l3 2"/></svg><span>Недавние</span></div>
+ <div class="dit a2" style="--k:3"><svg viewBox="0 0 24 24"><path d="M4 10v4l10 4V6zM14 9h3a2 2 0 0 1 0 6h-3M6 15l1 5h3l-1-4"/></svg><span>Обновления</span></div>
+ <div class="dit a2" style="--k:4" id="openSet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2l2 3 3.500-.5.5 3.500 3 2-2 3 .5 3.500-3.500.5-2 3-3-2-3 2-2-3-3.500-.5.5-3.500-2-3 3-2 .5-3.500L10 5z"/></svg><span>Настройки и конфиденциальность</span></div>
+</aside>
+<section class="sett" id="sett" aria-label="Настройки">
+ <div class="sh"><button class="ib" id="setBack" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Настройки</h1><button class="ib" aria-label="Поиск"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div>
+ <div class="tiles a3" style="--k:0"><div class="tile" id="trafT">Режим экономии трафика<span id="trafS">Автоматически</span></div><div class="tile" id="privT">Приватный режим<span id="privS">Выкл.</span></div></div>
+ <div class="plan a3" style="--k:1"><span id="planS">Бесплатный аккаунт</span><button id="planBtn">Узнать больше о Плюс</button></div>
+ <div class="grp">
+  <div class="srow a3" data-set="account" style="--k:3"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.2"/><path d="M6 19c1.5-3 10.5-3 12 0"/></svg><div><b>Аккаунт</b><span id="accS">Ахмад Сайфов • Бесплатный</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="content" style="--k:4"><svg viewBox="0 0 24 24"><path d="M9 18V5l8 2v3M9 18a3 3 0 1 1-3-3"/></svg><div><b>Контент и внешний вид</b><span id="contS">Контент для взрослых: Разрешён</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" id="openCust" style="--k:4"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 0 0 3-3c0-5-4-11-8-11z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="10" r="1"/></svg><div><b>Кастомизация</b><span>Цвет акцента • Тема • Оформление</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+ </div>
+ <div class="grp">
+  <div class="srow a3" data-set="privacy" style="--k:5"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><div><b>Конфиденциальность и приватность</b><span id="privRowS">Приватный режим • Открытые плейлисты</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="playback" style="--k:6"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l6 4V5L8 9zM17 9c1.5 1.8 1.5 4.2 0 6"/></svg><div><b>Воспроизведение</b><span id="playS">Без пауз • Кроссфейд выкл.</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="notif" style="--k:7"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><div><b>Уведомления</b><span id="notifS">Push • Письма</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+ </div>
+ <div class="grp">
+  <div class="srow a3" data-set="apps" style="--k:8"><svg viewBox="0 0 24 24"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg><div><b>Приложения и устройства</b><span id="appsS">2 устройства • Импорт</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="traffic" style="--k:9"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v9M8 12l4 4 4-4"/></svg><div><b>Трафик и офлайн-режим</b><span id="trafRowS">Авто • Скачивание по Wi-Fi</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="quality" style="--k:10"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><div><b>Качество медиафайлов</b><span id="qualS">Высокое • Wi-Fi</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="ads" style="--k:11"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><rect x="8" y="12" width="8" height="3"/></svg><div><b>Реклама</b><span id="adsS">Персонализированная: Вкл.</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+  <div class="srow a3" data-set="info" style="--k:12"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg><div><b>Инфо</b><span>Версия 2.4.1 • Политика</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+ </div>
+ <button class="exit a3" id="exitBtn" style="--k:13">Выйти</button>
+</section>
+<section class="cust" id="cust" aria-label="Кастомизация">
+ <div class="sh"><button class="ib" id="custBack" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Кастомизация</h1><span style="width:38px"></span></div>
+ <div class="pvw a3" style="--k:0"><div class="c"></div><div><b>Ночной рейс</b><span>Северный</span></div><button class="chip on">Все</button></div>
+ <div class="ch2 a3" style="--k:1">Цвет акцента</div>
+ <div class="swc a3" id="swA" style="--k:2"><i data-c="#ff5c7a" class="on" style="background:#ff5c7a"></i><i data-c="#8fa8ff" style="background:#8fa8ff"></i><i data-c="#b69ad6" style="background:#b69ad6"></i><i data-c="#7cd992" style="background:#7cd992"></i><i data-c="#ffb347" style="background:#ffb347"></i><i data-c="#ffd23f" style="background:#ffd23f"></i></div>
+ <div class="ch2 a3" style="--k:3">Тема</div>
+ <div class="opt a3" id="optB" style="--k:4"><button data-c="#0f0f11" class="on">Тёмная</button><button data-c="#000000">AMOLED</button><button data-c="#1c1c22">Графит</button></div>
+ <div class="ch2 a3" style="--k:5">Фон приложения</div>
+<div class="bgr a3" style="--k:6"><div class="bgt" id="bgT"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></div><div class="tx2"><b>Фото или видео</b><span id="bgS">Не выбрано</span></div><button class="chip on" id="bgPick">Выбрать</button><button class="chip" id="bgDel" hidden>Убрать</button></div>
+<input type="file" id="bgF" accept="image/*,video/*" hidden>
+<div class="sld a3" style="--k:7"><span>Затемнение</span><input type="range" id="bgD" min="0" max="85" step="1" value="40" aria-label="Затемнение фона"></div>
+<div class="ch2 a3" style="--k:8">Обложки</div>
+ <div class="opt a3" id="optR" style="--k:9"><button data-r="0" class="on">Строгие</button><button data-r="1">Скруглённые</button></div>
+ <div class="tg a3" id="tgA" style="--k:10"><span>Плавные анимации</span><u></u></div>
+</section>
+<section class="sdet" id="sdet" aria-label="Настройки — детали">
+ <div class="sh"><button class="ib" id="sdetBack" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="sdetTitle">Настройки</h1><span style="width:38px"></span></div>
+ <div id="sdetBody"></div>
+</section>
+
+<div class="scrim2" id="sh2"></div><div class="sheet" id="sheet"></div><div class="toast" id="toast"></div>
+<nav class="dock" id="dock" aria-label="Навигация">
+  <div class="lens" id="lens"></div>
+  <div class="tabs" id="tabs">
+    <div class="tab on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg>Главная</div>
+    <div class="tab"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>Поиск</div>
+    <div class="tab"><svg viewBox="0 0 24 24"><path d="M5 4v16M10 4v16M15 6l4 14"/></svg>Медиатека</div>
+    <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7 10c4-1.2 8-.8 11 .8M7.8 13.3c3-.8 6-.5 8.4.7M8.6 16.2c2.2-.5 4.2-.3 6 .5"/></svg>Плюс</div>
+    <div class="tab"><svg viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>Лайки</div>
+  </div>
+</nav>
+
+<script>
+var tops=[["#9db4ff","Артист А","m0"],["#ffb48a","Артист Б","m2"],["#ffd23f","Артист В","m0"]];
+var alb=[["Сингл","С тобой","Артист А, Артист Б","#2c3a6b","m0 cr"],["Альбом","Код доступа 996","Артист Б","#e9e4d8","m1"],["Альбом","Ламбо","Артист В","#7cd992","m2"]];
+var fav=[["Артист А","#b69ad6"],["Артист Б","#ffb48a"],["Артист В","#9db4ff"],["Артист Г","#ffd23f"]];
+r1.innerHTML=tops.map(function(t){return '<div class="card"><div class="cover tp" style="background:'+t[0]+'"><i class="mk '+t[2]+'"></i><span>'+t[1]+'</span></div><p><b>'+t[1]+'</b>Все лучшие треки</p></div>'}).join('');
+r2.innerHTML=alb.map(function(a){return '<div class="card"><div class="cover" style="background:'+a[3]+'"><i class="mk '+a[4]+'"></i></div><p><b>'+a[1]+'</b>'+a[2]+'</p></div>'}).join('');
+r3.innerHTML=fav.map(function(f){return '<div class="card"><div class="cover rd" style="background:'+f[1]+'">'+f[0].slice(-1)+'</div><p style="text-align:center"><b>'+f[0]+'</b></p></div>'}).join('');
+
+/* play / pause */
+var playing=false,pct=12,tm;
+pp.onclick=function(){playing=!playing;ppi.innerHTML=playing?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M7 4l13 8-13 8z"/>';clearInterval(tm);if(playing)tm=setInterval(function(){pct=pct>=100?0:pct+1;pg.style.width=pct+'%'},1000)};
+
+/* liquid glass dock */
+var dock=document.getElementById('dock'),lens=document.getElementById('lens'),tabEls=[].slice.call(document.querySelectorAll('.tab'));
+var N=5,idx=0,cur=0,target=0,sc=1,tsc=1,dragging=false,pw=0,W=0,raf=0;
+function measure(){W=dock.clientWidth;pw=W/N;lens.style.width=pw+'px';if(!dragging){target=idx*pw;cur=target}paint()}
+function paint(){lens.style.transform='translateX('+cur+'px) scale('+sc+','+(1+(sc-1)*.6)+')'}
+function loop(){
+  cur+=(target-cur)*.22;sc+=(tsc-sc)*.2;paint();
+  if(Math.abs(target-cur)>.1||Math.abs(tsc-sc)>.001)raf=requestAnimationFrame(loop);else raf=0
+}
+function go(){if(!raf)raf=requestAnimationFrame(loop)}
+function setIdx(i){if(i===idx)return;idx=i;tabEls.forEach(function(t,k){t.classList.toggle('on',k===i)});if(navigator.vibrate)navigator.vibrate(5);bounce(i)}
+function posX(e){var r=dock.getBoundingClientRect();return e.clientX-r.left}
+function move(e){
+  var x=posX(e);target=Math.max(0,Math.min(W-pw,x-pw/2));
+  setIdx(Math.max(0,Math.min(N-1,Math.floor(x/pw))));go()
+}
+dock.addEventListener('pointerdown',function(e){
+  dragging=true;dock.classList.add('drag');dock.setPointerCapture(e.pointerId);tsc=1.16;move(e)
+});
+dock.addEventListener('pointermove',function(e){if(dragging)move(e)});
+function end(){
+  if(!dragging)return;dragging=false;dock.classList.remove('drag');
+  tsc=1;target=idx*pw;go();showPage(idx)
+}
+dock.addEventListener('pointerup',end);dock.addEventListener('pointercancel',end);
+addEventListener('resize',measure);measure();
+/* tab icon animations + pages */
+var pageKey=0,gid=function(i){return document.getElementById(i)};
+function bounce(i){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  var s=tabEls[i].querySelector('svg'),f=[
+   [{transform:'translateY(0) scale(1)'},{transform:'translateY(-10px) scale(.9,1.14)',offset:.35},{transform:'translateY(0) scale(1.15,.85)',offset:.65},{transform:'translateY(0) scale(1)'}],
+   [{transform:'rotate(0) scale(1)'},{transform:'rotate(-30deg) scale(1.28)',offset:.3},{transform:'rotate(20deg) scale(1.15)',offset:.6},{transform:'rotate(0) scale(1)'}],
+   [{transform:'scale(1)'},{transform:'scale(.78,1.28)',offset:.3},{transform:'scale(1.18,.84)',offset:.6},{transform:'scale(1)'}],
+   [{transform:'rotate(0) scale(1)'},{transform:'rotate(200deg) scale(1.28)',offset:.5},{transform:'rotate(360deg) scale(1)'}],
+   [{transform:'scale(1)'},{transform:'scale(1.35)',offset:.25},{transform:'scale(.88)',offset:.45},{transform:'scale(1.18)',offset:.7},{transform:'scale(1)'}]][i];
+  s.animate(f,{duration:600,easing:'cubic-bezier(.3,1.25,.5,1)'});
+}
+function selectTab(i){setIdx(i);target=i*pw;go();showPage(i)}
+function showPage(i){
+  if(i===pageKey)return;pageKey=i;
+  var h=gid('home'),s=gid('search'),b=gid('stub'),lk=gid('likes');
+  h.style.display=i===0?'':'none';
+  s.classList.toggle('on',i===1);
+  gid('lib').classList.toggle('on',i===2);
+  b.classList.toggle('on',i===3);
+  if(lk) lk.classList.toggle('on',i===4);
+  if(i===3) gid('stubt').textContent='Плюс скоро будет здесь';
+  var el=i===0?h:i===1?s:i===2?gid('lib'):i===4?(lk||b):b;
+  el.classList.remove('pin');void el.offsetWidth;el.classList.add('pin');
+  scrollTo(0,0);
+  if(i===2)renderL(true);
+  if(i===1)renderS(true);
+  if(i===4)renderLikes(true);
+}
+
+var AR=[['Nox Kid','#6a6a72,#141416'],['Nox Rae','#c8a27a,#3b2a22'],['Nox Vale','#4aa3a0,#10282d'],['Nox Ember','#e0603a,#3a1008']];
+var TR=[['Полночь','Nox Kid, Mira Lane','#8a3a24,#150a08'],['Выше облаков','Nox Rae','#f2662f,#7a1e2a'],['Тихий вызов','Nox Vale, Dan Roe','#2a4b9a,#0b1022']];
+var SG=['nox kid','nox rae','nox vale','nox ember','nox stone'];
+var IS='<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>',IA='<svg viewBox="0 0 24 24"><path d="M17 17L7 7M7 15V7h8"/></svg>';
+var VF='';
+var DOTS='<button class="ib" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button><button class="ib" aria-label="Добавить"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg></button>';
+var SF=0,RC=[];
+try{RC=JSON.parse(localStorage.getItem('pl_rc')||'[]')}catch(e){}
+var CLK='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',XI='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',TRD='<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>';
+function esc(t){return String(t).replace(/[<>&"]/g,function(ch){return '&#'+ch.charCodeAt(0)+';'})}
+function svRC(){try{localStorage.setItem('pl_rc',JSON.stringify(RC))}catch(e){}}
+function addRC(t){t=String(t).trim();if(!t)return;RC=[t].concat(RC.filter(function(x){return x!==t})).slice(0,8);svRC()}
+function hl(t,q){var i=q?t.toLowerCase().indexOf(q):-1;return i<0?esc(t):esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length))}
+function renderS(anim){
+  var q=gid('q').value.trim().toLowerCase(),d=0,c=anim?' a':'';
+  gid('schips').style.display=q?'flex':'none';
+  gid('qx').style.visibility=gid('q').value?'visible':'hidden';
+  if(!q){
+    var h='';gid('sug').innerHTML='';
+    if(RC.length)h+='<div class="rch'+c+'" style="--d:0"><span>Недавние поиски</span><button id="rcClr">Очистить</button></div>'+RC.map(function(x,i){return '<div class="sg'+c+'" style="--d:'+(++d)+'" data-q="'+esc(x)+'">'+CLK+'<span>'+esc(x)+'</span><button class="rx" data-i="'+i+'" aria-label="Удалить">'+XI+'</button></div>'}).join('');
+    h+='<div class="rch'+c+'" style="--d:'+(++d)+'"><span>Популярные запросы</span></div>'+SG.map(function(x){return '<div class="sg'+c+'" style="--d:'+(++d)+'" data-q="'+x+'">'+TRD+'<span>'+x+'</span>'+IA+'</div>'}).join('');
+    gid('res').innerHTML=h;return;
+  }
+  function m(a){return a.join(' ').toLowerCase().indexOf(q)>-1}
+  var sg=SG.filter(function(x){return x.indexOf(q)>-1&&x!==q}).slice(0,5);
+  gid('sug').innerHTML=sg.map(function(x){return '<div class="sg'+c+'" style="--d:'+(d++)+'" data-q="'+x+'">'+IS+'<span>'+hl(x,q)+'</span>'+IA+'</div>'}).join('');
+  function ar(a){return SF!==1&&m([a[0]])?'<div class="rs'+c+'" style="--d:'+(d++)+'" data-n="'+a[0]+'"><div class="av2" style="border-radius:50%;background:'+a[1].split(',')[0]+'"></div><div class="rt"><b>'+hl(a[0],q)+VF+'</b><span>Исполнитель</span></div></div>':''}
+  function tr(a){return SF!==2&&m([a[0],a[1]])?'<div class="rs'+c+'" style="--d:'+(d++)+'" data-n="'+a[0]+'"><div class="av2" style="background:'+a[2].split(',')[0]+'"></div><div class="rt"><b>'+hl(a[0],q)+'</b><span><i class="eb">E</i>Трек • '+esc(a[1])+'</span></div>'+DOTS+'</div>':''}
+  var h2=ar(AR[0])+tr(TR[0])+tr(TR[1])+ar(AR[1])+ar(AR[2])+tr(TR[2])+ar(AR[3]);
+  gid('res').innerHTML=h2||'<div class="empty">Ничего не найдено. Попробуй другой запрос.</div>';
+}
+gid('schips').onclick=function(e){var b=e.target.closest('.chip');if(!b)return;SF=+b.dataset.f;[].forEach.call(this.children,function(x){x.classList.toggle('on',+x.dataset.f===SF)});renderS(true)};
+gid('res').onclick=function(e){
+  var x=e.target.closest('.rx');if(x){RC.splice(+x.dataset.i,1);svRC();renderS(false);return}
+  if(e.target.id==='rcClr'){RC=[];svRC();renderS(false);return}
+  var g=e.target.closest('.sg');if(g){addRC(g.dataset.q);gid('q').value=g.dataset.q;renderS(true);return}
+  var r=e.target.closest('.rs');if(r&&!e.target.closest('.ib')){addRC(gid('q').value||r.dataset.n);toast('Добавлено в недавние')}
+};
+gid('q').onkeydown=function(e){if(e.key==='Enter'){addRC(this.value);this.blur()}};
+gid('q').oninput=function(){renderS(false)};
+gid('qx').onclick=function(){var i=gid('q');i.value='';renderS(false);i.focus()};
+gid('cancel').onclick=function(){selectTab(0)};
+gid('sug').onclick=function(e){var r=e.target.closest('.sg');if(r){gid('q').value=r.dataset.q;renderS(false)}};
+
+/* library */
+var LF=0,LS=0,LG=0,NP=0;
+var PIN='<svg viewBox="0 0 24 24"><path style="fill:var(--green)" d="M14 3l7 7-2 1-3 3 .5 4.5-1.5 1.5-4-4-6 6-1-1 6-6-4-4 1.5-1.5L12 9l3-3z"/></svg>';
+var HEART='<svg viewBox="0 0 24 24" style="fill:#fff;stroke:none;width:44%;height:44%"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>';
+var PL='<svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>';
+var ICP='<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>',ICN='<svg viewBox="0 0 24 24"><path d="M14 3l7 7-2 1-3 3 .5 4.5-1.5 1.5-4-4-6 6-1-1 6-6-4-4 1.5-1.5L12 9l3-3z"/></svg>',ICD='<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>';
+var GR=['#9db4ff','#ffb48a','#7cd992','#ffd23f'];
+var LI=[['Любимые треки','p','Плейлист • Ты','#4a10ff',1,1],['Артист А','a','Исполнитель','#6a6a72'],['Артист Б','a','Исполнитель','#c8a27a'],['Артист В','a','Исполнитель','#4aa3a0'],['Ночной драйв','p','Плейлист • Ты','#f2662f'],['Северное сияние','al','Альбом • Артист А','#2fb67c'],['Тихие воды','al','Альбом • Артист Б','#2a4b9a']];
+try{var sv=JSON.parse(localStorage.getItem('pl_li')||'null');if(sv&&sv.length)LI=sv}catch(e){}
+function saveL(){try{localStorage.setItem('pl_li',JSON.stringify(LI))}catch(e){}}
+var sh=gid('sheet'),s2=gid('sh2'),tt;
+function openSh(h){sh.innerHTML='<div class="gr"></div>'+h;sh.classList.add('on');s2.classList.add('on')}
+function closeSh(){sh.classList.remove('on');s2.classList.remove('on')}
+s2.onclick=closeSh;
+function toast(m,u){var t=gid('toast');t.innerHTML='<span>'+m+'</span>'+(u?'<u>Отменить</u>':'');t.classList.add('on');t.onclick=u?function(){u();t.classList.remove('on')}:null;clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},3200)}
+function renderL(anim){
+  var q=gid('lq').value.trim().toLowerCase(),c=anim?' a':'',d=0,T={1:'p',2:'a',3:'al'};
+  var a=LI.map(function(x,i){return {x:x,i:i}}).filter(function(o){return(!LF||o.x[1]===T[LF])&&(!q||o.x[0].toLowerCase().indexOf(q)>-1)});
+  if(LS===1)a.sort(function(p,r){return p.x[0].localeCompare(r.x[0],'ru')});
+  if(LS===2){var ord={p:0,al:1,a:2};a.sort(function(p,r){return ord[ord[p.x[1]]!==undefined?p.x[1]:'p']-ord[r.x[1]]||p.i-r.i})}
+  a.sort(function(p,r){return(r.x[4]?1:0)-(p.x[4]?1:0)});
+  var h=a.map(function(o){var x=o.x;return '<div class="li'+c+'" style="--d:'+(d++)+'" data-i="'+o.i+'"><div class="c'+(x[1]==='a'?' ar':'')+'" style="background:'+x[3]+'">'+(x[5]?HEART:'')+'</div><div class="lt"><b>'+esc(x[0])+'</b><span>'+(x[4]?PIN:'')+esc(x[2])+'</span></div></div>'}).join('');
+  if(!LF&&!q)h+='<div class="li add'+c+'" style="--d:'+(d++)+'" data-add="p"><div class="c">'+PL+'</div><div class="lt"><b>Создать плейлист</b></div></div><div class="li add'+c+'" style="--d:'+(d++)+'" data-add="x"><div class="c ar">'+PL+'</div><div class="lt"><b>Добавить исполнителя</b></div></div>';
+  gid('ll').innerHTML=h||'<div class="empty">'+(q?'Ничего не найдено':'Здесь пока пусто')+'</div>';
+}
+function gridIcon(){gid('lgi').innerHTML=LG?'<path d="M4 6h16M4 12h16M4 18h16"/>':'<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>'}
+gridIcon();
+var SN=['Недавние','По алфавиту','По типу'];
+function openItem(i){var x=LI[i];sh.dataset.i=i;openSh('<h3>'+esc(x[0])+'</h3><div class="sa" data-a="play">'+ICP+'<b>Слушать</b></div><div class="sa'+(x[4]?' on':'')+'" data-a="pin">'+ICN+'<b>'+(x[4]?'Открепить':'Закрепить')+'</b></div>'+(x[5]?'':'<div class="sa red" data-a="del">'+ICD+'<b>Убрать из медиатеки</b></div>'))}
+function openNew(){openSh('<h3>Новый плейлист</h3><input id="npn" placeholder="Название" maxlength="40" autocomplete="off"><button class="go" id="npg">Создать</button>');setTimeout(function(){var n=gid('npn');if(n)n.focus()},380)}
+function mkPl(){var n=gid('npn').value.trim()||'Мой плейлист '+(++NP);LI.unshift([n,'p','Плейлист • Ты',GR[LI.length%4]]);saveL();closeSh();renderL(true);toast('Плейлист «'+esc(n)+'» создан')}
+/* original sh.onclick moved to settings block */
+sh.onkeydown=function(e){if(e.key==='Enter'&&e.target.id==='npn')mkPl()};
+gid('ll').onclick=function(e){var r=e.target.closest('.li');if(!r)return;if(r.dataset.i!==undefined)openItem(+r.dataset.i);else if(r.dataset.add==='p')openNew();else toast('Скоро будет доступно')};
+gid('lchips').onclick=function(e){var b=e.target.closest('.chip');if(!b)return;var f=+b.dataset.f;LF=LF===f?0:f;[].forEach.call(this.children,function(x){x.classList.toggle('on',+x.dataset.f===LF)});renderL(true)};
+gid('lsort').onclick=function(){openSh('<h3>Сортировка</h3>'+SN.map(function(n,k){return '<div class="sa'+(LS===k?' on':'')+'" data-s="'+k+'"><b>'+n+'</b></div>'}).join(''))};
+gid('lgrid').onclick=function(){LG^=1;gid('ll').className='ll'+(LG?' grid':'');gridIcon();renderL(true)};
+gid('lsb').onclick=function(){var w=gid('lqw');w.classList.toggle('on');if(w.classList.contains('on'))gid('lq').focus();else{gid('lq').value='';renderL(false)}};
+gid('lq').oninput=function(){renderL(false)};
+gid('lpl').onclick=openNew;
+
+/* full player */
+(function(){
+var $=function(i){return document.getElementById(i)};
+var L=['Луна над водой рисует дорогу','Мы идём по ней вдвоём, не спеша','Тишина говорит громче слов','И в ней нам совсем не страшно','Держи мою руку, пока горит свет','Всё, что нужно, уже рядом со мной','Пусть ночь не кончается долго','Мы запомним эту воду и небо','Звёзды падают прямо в ладони','Я с тобой, и этого достаточно','Город спит, а мы ещё живы','Утро подождёт у берега'];
+var T=L.map(function(_,i){return i*18}),D=224,t=5,pl=false,li=-1,tm=0,started=false;
+var PLAY='<path d="M7 4l13 8-13 8z"/>',PAUSE='<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
+var player=$('player'),lyr=$('lyr'),lw=$('lw');
+lw.innerHTML=L.map(function(x,i){return '<div class="l" data-i="'+i+'">'+x+'</div>'}).join('');
+var els=[].slice.call(lw.children);
+function fmt(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+('0'+s%60).slice(-2)}
+function render(){
+  var p=(t/D*100)+'%';
+  $('fill').style.width=p;$('fill2').style.width=p;$('pg').style.width=p;
+  $('t1').textContent=$('t1b').textContent=fmt(t);
+  $('t2').textContent=$('t2b').textContent='-'+fmt(D-t);
+  var i=0;for(var k=0;k<T.length;k++)if(T[k]<=t)i=k;
+  if(i!==li){
+    li=i;var c=$('cur');c.textContent=L[i];c.classList.remove('sw');void c.offsetWidth;c.classList.add('sw');
+    els.forEach(function(e,k){e.classList.toggle('on',k===i)});
+    $('pv').textContent=L[Math.min(i+1,L.length-1)];
+    lw.scrollTo({top:Math.max(0,els[i].offsetTop-lw.offsetTop-40),behavior:'smooth'});
+  }
+}
+function setPlay(v){
+  pl=v;var ic=v?PAUSE:PLAY;
+  document.querySelectorAll('#pb svg,#pb2 svg').forEach(function(s){s.innerHTML=ic});
+  $('ppi').innerHTML=ic;
+  player.classList.toggle('paused',!v);
+  clearInterval(tm);
+  if(v)tm=setInterval(function(){t=t+1>=D?0:t+1;render()},1000);
+}
+function openP(){player.classList.add('open');document.body.classList.add('pushed');if(!started){started=true;setPlay(true)}}
+function closeP(){document.body.classList.remove('pushed');lyr.classList.remove('open');player.classList.remove('open')}
+document.querySelector('.mini').addEventListener('click',function(e){if(!e.target.closest('button'))openP()});
+$('pp').onclick=function(){setPlay(!pl)};
+$('pb').onclick=$('pb2').onclick=function(){setPlay(!pl)};
+$('close').onclick=closeP;
+var y0=null,dy=0;
+player.addEventListener('pointerdown',function(e){if(e.target.closest('.scrub,button,.prev'))return;y0=e.clientY;dy=0;player.style.transition='none';player.setPointerCapture(e.pointerId)});
+player.addEventListener('pointermove',function(e){if(y0===null)return;dy=Math.max(0,e.clientY-y0);player.style.transform='translate(-50%,'+dy+'px) scale('+(1-dy/2600)+')';player.style.borderRadius=Math.min(34,dy/3)+'px'});
+function up(){if(y0===null)return;y0=null;player.style.transition='';player.style.transform='';player.style.borderRadius='';if(dy>130)closeP()}
+player.addEventListener('pointerup',up);player.addEventListener('pointercancel',up);
+$('prev').onclick=function(){lyr.classList.add('open');li=-1;render()};
+$('lclose').onclick=function(){lyr.classList.remove('open')};
+$('prv').onclick=function(){t=0;render()};
+$('nxt').onclick=function(){t=0;render()};
+$('shuf').onclick=function(){this.classList.toggle('g')};
+$('tr').onclick=function(){this.classList.toggle('act')};
+/* like bound later */
+els.forEach(function(e){e.onclick=function(){t=T[+e.dataset.i];li=-1;render()}});
+document.querySelectorAll('.scrub').forEach(function(s){
+  var d=false;function seek(e){var r=s.getBoundingClientRect();t=Math.max(0,Math.min(D-1,(e.clientX-r.left)/r.width*D));render()}
+  s.addEventListener('pointerdown',function(e){d=true;s.setPointerCapture(e.pointerId);seek(e)});
+  s.addEventListener('pointermove',function(e){if(d)seek(e)});
+  s.addEventListener('pointerup',function(){d=false});
+});
+setPlay(false);render();
+})();
+
+(function(){
+var b=document.body,dr=document.getElementById('drawer'),sc=document.getElementById('scrim'),st=document.getElementById('sett');
+function dOpen(o){dr.classList.toggle('on',o);sc.classList.toggle('on',o);b.classList.toggle('dshift',o)}
+function sOpen(o){st.classList.toggle('on',o);if(o)st.scrollTop=0}
+[].forEach.call(document.querySelectorAll('.hd>.av,.lh2>.av'),function(a){a.style.cursor='pointer';a.addEventListener('click',function(){dOpen(true)})});
+sc.onclick=function(){dOpen(false)};
+document.getElementById('openSet').onclick=function(){sOpen(true);setTimeout(function(){dOpen(false)},380)};
+document.getElementById('setBack').onclick=function(){sOpen(false)};
+var sx=null;dr.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});
+dr.addEventListener('touchend',function(e){if(sx!==null&&sx-e.changedTouches[0].clientX>60)dOpen(false);sx=null});
+
+/* ===== LIKES ===== */
+var LIKES = [];
+try { LIKES = JSON.parse(localStorage.getItem('pl_likes') || '[]'); } catch(e) {}
+function saveLikes() { try { localStorage.setItem('pl_likes', JSON.stringify(LIKES)); } catch(e) {} }
+
+var CUR_TRACK = { id: 'stoboy', title: 'С тобой', artist: 'Артист А, Артист Б', color: '#2c3a6b' };
+
+function isLiked(id) {
+  return LIKES.some(function(x) { return x.id === id; });
+}
+
+var HEART_PATH = 'M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z';
+
+function setHeartVisual(svg, on, animate) {
+  if (!svg) return;
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.innerHTML = '<path d="' + HEART_PATH + '"/>';
+  if (on) {
+    svg.setAttribute('fill', '#ff5c7a');
+    svg.setAttribute('stroke', '#ff5c7a');
+  } else {
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+  }
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  if (animate) {
+    svg.style.transformOrigin = 'center';
+    svg.animate([
+      { transform: 'scale(1)', offset: 0 },
+      { transform: 'scale(1.35)', offset: 0.35 },
+      { transform: 'scale(0.9)', offset: 0.6 },
+      { transform: 'scale(1.12)', offset: 0.8 },
+      { transform: 'scale(1)', offset: 1 }
+    ], { duration: 420, easing: 'cubic-bezier(.3,1.4,.5,1)' });
+  }
+}
+
+function updateLikeBtn(animate) {
+  var on = isLiked(CUR_TRACK.id);
+  var btn = document.getElementById('like');
+  var svg = document.getElementById('likei');
+  if (btn) {
+    btn.dataset.on = on ? '1' : '0';
+    btn.style.color = on ? '#ff5c7a' : '';
+  }
+  setHeartVisual(svg, on, animate);
+  // mini
+  var mi = document.getElementById('miniLikei');
+  if (mi) {
+    setHeartVisual(mi, on, false);
+    if (!on) mi.setAttribute('stroke', '#fff');
+  }
+}
+
+function toggleLikeCurrent() {
+  var id = CUR_TRACK.id;
+  var idx = LIKES.findIndex(function(x) { return x.id === id; });
+  var nowLiked;
+  if (idx >= 0) {
+    LIKES.splice(idx, 1);
+    nowLiked = false;
+    if (typeof toast === 'function') toast('Убрано из лайков');
+  } else {
+    LIKES.unshift({
+      id: CUR_TRACK.id,
+      title: CUR_TRACK.title,
+      artist: CUR_TRACK.artist,
+      color: CUR_TRACK.color,
+      ts: Date.now()
+    });
+    nowLiked = true;
+    if (typeof toast === 'function') toast('Добавлено в лайки');
+  }
+  saveLikes();
+  updateLikeBtn(true);
+  if (typeof pageKey !== 'undefined' && pageKey === 4 && typeof renderLikes === 'function') renderLikes(false);
+}
+
+function unlikeById(id) {
+  LIKES = LIKES.filter(function(x) { return x.id !== id; });
+  saveLikes();
+  updateLikeBtn(false);
+  renderLikes(false);
+  if (typeof toast === 'function') toast('Убрано из лайков');
+}
+
+function renderLikes(anim) {
+  var list = document.getElementById('likesList');
+  var empty = document.getElementById('likesEmpty');
+  var cnt = document.getElementById('likesCount');
+  if (!list) return;
+  if (cnt) cnt.textContent = LIKES.length + ' ' + (LIKES.length === 1 ? 'трек' : LIKES.length < 5 ? 'трека' : 'треков');
+  if (!LIKES.length) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  var c = anim ? ' a' : '';
+  var h = LIKES.map(function(t, i) {
+    return '<div class="li' + c + '" style="--d:' + i + '" data-like-id="' + t.id + '">' +
+      '<div class="c" style="background:' + (t.color || '#2c3a6b') + '">' +
+        '<svg viewBox="0 0 24 24" style="width:40%;height:40%;fill:#fff;stroke:none"><path d="' + HEART_PATH + '"/></svg>' +
+      '</div>' +
+      '<div class="lt"><b>' + (typeof esc === 'function' ? esc(t.title) : t.title) + '</b><span>' + (typeof esc === 'function' ? esc(t.artist) : t.artist) + '</span></div>' +
+      '<button class="ib" data-unlike="' + t.id + '" aria-label="Убрать лайк" style="flex:none">' +
+        '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ff5c7a" stroke="#ff5c7a"><path d="' + HEART_PATH + '"/></svg>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+  list.innerHTML = h;
+}
+
+// Bind clicks once DOM is ready (script is at end of body, so OK)
+(function bindLikes() {
+  function onLikeClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleLikeCurrent();
+  }
+  var likeBtn = document.getElementById('like');
+  if (likeBtn) {
+    likeBtn.addEventListener('click', onLikeClick);
+    // also pointer for better mobile
+    likeBtn.addEventListener('pointerup', function(e) {
+      if (e.pointerType === 'touch') return; // click will fire
+    });
+  }
+  var miniLike = document.getElementById('miniLike');
+  if (miniLike) {
+    miniLike.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleLikeCurrent();
+    });
+  }
+  // likes list
+  document.addEventListener('click', function(e) {
+    var u = e.target.closest('[data-unlike]');
+    if (u) {
+      e.stopPropagation();
+      unlikeById(u.dataset.unlike);
+      return;
+    }
+    var row = e.target.closest('#likesList .li');
+    if (row && row.dataset.likeId) {
+      var t = LIKES.find(function(x) { return x.id === row.dataset.likeId; });
+      if (t) {
+        CUR_TRACK = { id: t.id, title: t.title, artist: t.artist, color: t.color };
+        var miniT = document.querySelector('.mini .t b');
+        var miniS = document.querySelector('.mini .t span');
+        if (miniT) miniT.textContent = t.title;
+        if (miniS) miniS.textContent = t.artist;
+        var ttl = document.querySelector('.player .ttl');
+        var ar = document.querySelector('.player .ar');
+        var pt = document.querySelector('.player .pt');
+        if (ttl) ttl.textContent = t.title;
+        if (ar) ar.textContent = t.artist;
+        if (pt) pt.textContent = t.title;
+        var lh = document.querySelector('.lyr .lh div');
+        if (lh) lh.innerHTML = t.title + '<small>' + t.artist + '</small>';
+        updateLikeBtn(false);
+        var mini = document.querySelector('.mini');
+        if (mini) mini.click();
+      }
+    }
+  });
+  // initial state
+  updateLikeBtn(false);
+  // when player opens, refresh
+  var p = document.getElementById('player');
+  if (p) {
+    var obs = new MutationObserver(function() {
+      if (p.classList.contains('open')) updateLikeBtn(false);
+    });
+    obs.observe(p, { attributes: true, attributeFilter: ['class'] });
+  }
+})();
+
+/* ===== SETTINGS STATE & UI ===== */
+var ST = {
+  private: false,
+  traf: 0, // 0 auto, 1 on, 2 off
+  explicit: true,
+  openPl: true,
+  gapless: true,
+  crossfade: false,
+  normalize: true,
+  push: true,
+  email: true,
+  newRel: true,
+  mobileDl: false,
+  wifiOnly: true,
+  quality: 2, // 0 low, 1 normal, 2 high
+  ads: true,
+  devices: 2
+};
+try {
+  var _st = JSON.parse(localStorage.getItem('pl_st') || 'null');
+  if (_st) Object.assign(ST, _st);
+} catch(e) {}
+
+function saveST() {
+  try { localStorage.setItem('pl_st', JSON.stringify(ST)); } catch(e) {}
+}
+
+function updSettingsUI() {
+  var privOn = ST.private;
+  var pt = document.getElementById('privT');
+  if (pt) { pt.classList.toggle('on', privOn); }
+  var ps = document.getElementById('privS');
+  if (ps) ps.textContent = privOn ? 'Вкл.' : 'Выкл.';
+  var trafL = ['Автоматически', 'Включён', 'Выключен'];
+  var ts = document.getElementById('trafS');
+  if (ts) ts.textContent = trafL[ST.traf];
+  var tt = document.getElementById('trafT');
+  if (tt) tt.classList.toggle('on', ST.traf === 1);
+  var el;
+  el = document.getElementById('accS'); if (el) el.textContent = 'Ахмад Сайфов • ' + (ST.private ? 'Приватный' : 'Бесплатный');
+  el = document.getElementById('contS'); if (el) el.textContent = 'Контент для взрослых: ' + (ST.explicit ? 'Разрешён' : 'Запрещён');
+  el = document.getElementById('privRowS'); if (el) el.textContent = (ST.private ? 'Приватный режим • ' : '') + (ST.openPl ? 'Открытые плейлисты' : 'Закрытые плейлисты');
+  el = document.getElementById('playS'); if (el) el.textContent = (ST.gapless ? 'Без пауз' : 'С паузами') + ' • Кроссфейд ' + (ST.crossfade ? 'вкл.' : 'выкл.');
+  el = document.getElementById('notifS'); if (el) el.textContent = (ST.push ? 'Push' : 'Без push') + (ST.email ? ' • Письма' : '');
+  el = document.getElementById('appsS'); if (el) el.textContent = ST.devices + ' устройств' + (ST.devices > 1 ? 'а' : '') + ' • Импорт';
+  var trafR = ['Авто', 'Экономия', 'Выкл.'];
+  el = document.getElementById('trafRowS'); if (el) el.textContent = trafR[ST.traf] + ' • ' + (ST.mobileDl ? 'Мобильные данные' : 'Только Wi-Fi');
+  var qL = ['Низкое', 'Обычное', 'Высокое'];
+  el = document.getElementById('qualS'); if (el) el.textContent = qL[ST.quality] + ' • ' + (ST.wifiOnly ? 'Wi-Fi' : 'Любая сеть');
+  el = document.getElementById('adsS'); if (el) el.textContent = 'Персонализированная: ' + (ST.ads ? 'Вкл.' : 'Выкл.');
+  el = document.getElementById('planS'); if (el) el.textContent = ST.private ? 'Приватный режим' : 'Бесплатный аккаунт';
+}
+
+updSettingsUI();
+
+/* Toggle helper used inside detail pages */
+function tgRow(key, label, on) {
+  return '<div class="tg' + (on ? ' on' : '') + '" data-tg="' + key + '"><span>' + label + '</span><u></u></div>';
+}
+function optRow(key, label, selected) {
+  return '<div class="sa' + (selected ? ' on' : '') + '" data-opt="' + key + '"><b>' + label + '</b></div>';
+}
+function infoRow(label, value) {
+  return '<div class="srow" style="cursor:default"><div><b>' + label + '</b>' + (value ? '<span>' + value + '</span>' : '') + '</div></div>';
+}
+
+var sdet = document.getElementById('sdet');
+var sdetBody = document.getElementById('sdetBody');
+var sdetTitle = document.getElementById('sdetTitle');
+
+function openSdet(title, html) {
+  sdetTitle.textContent = title;
+  sdetBody.innerHTML = html;
+  sdet.classList.add('on');
+  sdet.scrollTop = 0;
+  // animate children
+  var kids = sdetBody.querySelectorAll('.tg,.grp,.sa,.srow,.ch2,.opt,.plan');
+  kids.forEach(function(el, i) {
+    el.classList.add('a3');
+    el.style.setProperty('--k', i);
+  });
+}
+
+function closeSdet() {
+  sdet.classList.remove('on');
+}
+
+document.getElementById('sdetBack').onclick = closeSdet;
+
+/* Detail page builders */
+var setPages = {
+  account: function() {
+    openSdet('Аккаунт',
+      '<div class="grp" style="margin-top:8px">' +
+        '<div class="srow" style="cursor:default"><div class="av" style="width:48px;height:48px;font-size:20px;margin-right:4px">А</div><div><b>Ахмад Сайфов</b><span>ahmad@example.com</span></div></div>' +
+      '</div>' +
+      '<div class="ch2">Профиль</div>' +
+      '<div class="grp">' +
+        '<div class="srow" data-act="rename"><div><b>Имя пользователя</b><span>Ахмад Сайфов</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="email"><div><b>Электронная почта</b><span>ahmad@example.com</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="sub"><div><b>Подписка</b><span>Бесплатный аккаунт</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+      '</div>' +
+      '<div class="ch2">Безопасность</div>' +
+      '<div class="grp">' +
+        '<div class="srow" data-act="pass"><div><b>Сменить пароль</b></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="2fa"><div><b>Двухфакторная аутентификация</b><span>Выкл.</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+      '</div>' +
+      '<button class="exit" data-act="logout" style="margin-top:28px">Выйти из аккаунта</button>'
+    );
+  },
+  content: function() {
+    openSdet('Контент и внешний вид',
+      '<div class="ch2">Контент</div>' +
+      tgRow('explicit', 'Разрешить контент для взрослых (E)', ST.explicit) +
+      '<div class="ch2">Звук</div>' +
+      tgRow('normalize', 'Нормализация громкости', ST.normalize) +
+      '<div class="ch2">Отображение</div>' +
+      tgRow('showE', 'Показывать метку «E» у треков', true)
+    );
+  },
+  privacy: function() {
+    openSdet('Конфиденциальность',
+      '<div class="ch2">Приватность</div>' +
+      tgRow('private', 'Приватный режим', ST.private) +
+      tgRow('openPl', 'Открытые плейлисты', ST.openPl) +
+      '<div class="ch2">Данные</div>' +
+      '<div class="grp">' +
+        '<div class="srow" data-act="clearhist"><div><b>Очистить историю прослушивания</b><span>Удалить недавние треки</span></div></div>' +
+        '<div class="srow" data-act="clearrc"><div><b>Очистить недавние поиски</b></div></div>' +
+      '</div>'
+    );
+  },
+  playback: function() {
+    openSdet('Воспроизведение',
+      '<div class="ch2">Переходы</div>' +
+      tgRow('gapless', 'Без пауз (gapless)', ST.gapless) +
+      tgRow('crossfade', 'Кроссфейд', ST.crossfade) +
+      '<div class="ch2">Громкость</div>' +
+      tgRow('normalize', 'Нормализация громкости', ST.normalize) +
+      '<div class="ch2">Автовоспроизведение</div>' +
+      tgRow('autoplay', 'Продолжать похожие треки', true)
+    );
+  },
+  notif: function() {
+    openSdet('Уведомления',
+      '<div class="ch2">Push</div>' +
+      tgRow('push', 'Push-уведомления', ST.push) +
+      tgRow('newRel', 'Новые релизы', ST.newRel) +
+      '<div class="ch2">Почта</div>' +
+      tgRow('email', 'Электронные письма', ST.email) +
+      tgRow('promo', 'Рекламные рассылки', false)
+    );
+  },
+  apps: function() {
+    openSdet('Приложения и устройства',
+      '<div class="ch2">Активные устройства</div>' +
+      '<div class="grp">' +
+        '<div class="srow" style="cursor:default"><div><b>Этот телефон</b><span>Активно сейчас</span></div><em style="color:var(--green);font-style:normal;font-size:13px">●</em></div>' +
+        '<div class="srow" style="cursor:default"><div><b>Браузер Chrome</b><span>2 часа назад</span></div></div>' +
+      '</div>' +
+      '<div class="ch2">Действия</div>' +
+      '<div class="grp">' +
+        '<div class="srow" data-act="import"><div><b>Импорт из других приложений</b><span>Spotify, Apple Music…</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="disconnect"><div><b style="color:#ff6b6b">Отключить все устройства</b></div></div>' +
+      '</div>'
+    );
+  },
+  traffic: function() {
+    openSdet('Трафик и офлайн',
+      '<div class="ch2">Режим экономии трафика</div>' +
+      '<div class="opt" id="optTraf">' +
+        '<button data-traf="0"' + (ST.traf===0?' class="on"':'') + '>Авто</button>' +
+        '<button data-traf="1"' + (ST.traf===1?' class="on"':'') + '>Всегда</button>' +
+        '<button data-traf="2"' + (ST.traf===2?' class="on"':'') + '>Выкл.</button>' +
+      '</div>' +
+      '<div class="ch2">Скачивание</div>' +
+      tgRow('mobileDl', 'Скачивание по мобильной сети', ST.mobileDl) +
+      tgRow('wifiOnly', 'Высокое качество только по Wi-Fi', ST.wifiOnly)
+    );
+  },
+  quality: function() {
+    openSdet('Качество медиафайлов',
+      '<div class="ch2">Качество потокового аудио</div>' +
+      '<div class="opt" id="optQual">' +
+        '<button data-q="2"' + (ST.quality===2?' class="on"':'') + '>Высокое</button>' +
+        '<button data-q="1"' + (ST.quality===1?' class="on"':'') + '>Обычное</button>' +
+        '<button data-q="0"' + (ST.quality===0?' class="on"':'') + '>Низкое</button>' +
+      '</div>' +
+      '<div class="ch2" style="margin-top:18px">320 kbps · 160 kbps · 96 kbps</div>' +
+      '<div class="ch2">Сеть</div>' +
+      tgRow('wifiOnly', 'Высокое качество только по Wi-Fi', ST.wifiOnly)
+    );
+  },
+  ads: function() {
+    openSdet('Реклама',
+      '<div class="ch2">Персонализация</div>' +
+      tgRow('ads', 'Персонализированная реклама', ST.ads) +
+      '<div class="ch2">Информация</div>' +
+      '<div class="grp">' +
+        '<div class="srow" data-act="aboutads"><div><b>О рекламе в приложении</b><span>Как мы используем данные</span></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+      '</div>' +
+      '<p style="margin:20px 20px;font-size:13px;color:var(--mute);line-height:1.4">Отключение персонализации не убирает рекламу полностью, но делает её менее релевантной.</p>'
+    );
+  },
+  info: function() {
+    openSdet('Информация',
+      '<div class="grp" style="margin-top:8px">' +
+        '<div class="srow" style="cursor:default"><div><b>Версия</b><span>2.4.1 (build 241)</span></div></div>' +
+        '<div class="srow" style="cursor:default"><div><b>Сборка</b><span>2026.11.25</span></div></div>' +
+      '</div>' +
+      '<div class="ch2">Документы</div>' +
+      '<div class="grp">' +
+        '<div class="srow" data-act="privacy"><div><b>Политика конфиденциальности</b></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="terms"><div><b>Условия использования</b></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+        '<div class="srow" data-act="licenses"><div><b>Лицензии открытого ПО</b></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+      '</div>' +
+      '<div class="ch2">Обратная связь</div>' +
+      '<div class="grp">' +
+        '<div class="srow" data-act="feedback"><div><b>Отправить отзыв</b></div><svg class="ch" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>' +
+      '</div>'
+    );
+  }
+};
+
+/* Main settings list clicks → open detail page */
+[].forEach.call(document.querySelectorAll('.srow[data-set]'), function(row) {
+  row.addEventListener('click', function() {
+    var key = this.dataset.set;
+    if (setPages[key]) setPages[key]();
+  });
+});
+
+/* Toggles & options inside detail page */
+sdetBody.addEventListener('click', function(e) {
+  var tg = e.target.closest('.tg');
+  if (tg && tg.dataset.tg) {
+    var key = tg.dataset.tg;
+    var map = {
+      explicit: 'explicit', private: 'private', openPl: 'openPl',
+      gapless: 'gapless', crossfade: 'crossfade', normalize: 'normalize',
+      push: 'push', email: 'email', newRel: 'newRel',
+      mobileDl: 'mobileDl', wifiOnly: 'wifiOnly', ads: 'ads'
+    };
+    if (map[key]) {
+      ST[map[key]] = !ST[map[key]];
+      tg.classList.toggle('on', ST[map[key]]);
+      saveST();
+      updSettingsUI();
+      return;
+    }
+    // non-persisted toggles just flip UI
+    tg.classList.toggle('on');
+    return;
+  }
+
+  var btn = e.target.closest('#optTraf button');
+  if (btn && btn.dataset.traf !== undefined) {
+    ST.traf = +btn.dataset.traf;
+    [].forEach.call(btn.parentNode.children, function(b){ b.classList.toggle('on', b === btn); });
+    saveST();
+    updSettingsUI();
+    return;
+  }
+
+  btn = e.target.closest('#optQual button');
+  if (btn && btn.dataset.q !== undefined) {
+    ST.quality = +btn.dataset.q;
+    [].forEach.call(btn.parentNode.children, function(b){ b.classList.toggle('on', b === btn); });
+    saveST();
+    updSettingsUI();
+    return;
+  }
+
+  var act = e.target.closest('[data-act]');
+  if (act) {
+    var a = act.dataset.act;
+    if (a === 'logout') { closeSdet(); toast('Вы вышли из аккаунта'); return; }
+    if (a === 'clearhist') { toast('История прослушивания очищена'); return; }
+    if (a === 'clearrc') { RC = []; svRC(); toast('Недавние поиски очищены'); return; }
+    if (a === 'disconnect') { ST.devices = 1; saveST(); updSettingsUI(); toast('Все устройства отключены'); return; }
+    if (a === 'import' || a === 'rename' || a === 'email' || a === 'sub' || a === 'pass' || a === '2fa' ||
+        a === 'aboutads' || a === 'privacy' || a === 'terms' || a === 'licenses' || a === 'feedback') {
+      toast('Скоро будет доступно');
+      return;
+    }
+  }
+});
+
+/* Top tiles */
+document.getElementById('privT').onclick = function() {
+  ST.private = !ST.private;
+  saveST();
+  updSettingsUI();
+  toast(ST.private ? 'Приватный режим включён' : 'Приватный режим выключен');
+};
+
+document.getElementById('trafT').onclick = function() {
+  ST.traf = (ST.traf + 1) % 3;
+  saveST();
+  updSettingsUI();
+  var names = ['Автоматически', 'Включён', 'Выключен'];
+  toast('Режим экономии: ' + names[ST.traf]);
+};
+
+document.getElementById('planBtn').onclick = function() {
+  openSdet('Плеер Плюс',
+    '<div class="plan" style="padding-top:12px"><span>Бесплатно 1 месяц</span></div>' +
+    '<div class="grp">' +
+      '<div class="srow" style="cursor:default"><div><b>Без рекламы</b><span>Слушай без прерываний</span></div></div>' +
+      '<div class="srow" style="cursor:default"><div><b>Высокое качество</b><span>До 320 kbps</span></div></div>' +
+      '<div class="srow" style="cursor:default"><div><b>Офлайн-режим</b><span>Скачивай и слушай без сети</span></div></div>' +
+      '<div class="srow" style="cursor:default"><div><b>Неограниченное скачивание</b></div></div>' +
+    '</div>' +
+    '<button class="exit" style="background:var(--tx);color:var(--bg);margin-top:28px" data-act="plus">Попробовать бесплатно</button>'
+  );
+};
+
+document.getElementById('exitBtn').onclick = function() {
+  openSdet('Выход',
+    '<p style="margin:24px 20px;font-size:16px;line-height:1.4;color:var(--mute)">Вы уверены, что хотите выйти из аккаунта?</p>' +
+    '<button class="exit" data-act="logout" style="margin-top:8px">Выйти</button>' +
+    '<button class="exit" style="background:var(--sf2);color:var(--tx);margin-top:12px" onclick="closeSdet()">Отмена</button>'
+  );
+};
+
+/* When leaving settings, also close detail */
+var _origSetBack = document.getElementById('setBack').onclick;
+document.getElementById('setBack').onclick = function() {
+  closeSdet();
+  if (_origSetBack) _origSetBack();
+  else {
+    document.getElementById('sett').classList.remove('on');
+  }
+};
+
+var cu = document.getElementById('cust'), R = document.documentElement, S = {c:'#ff5c7a',b:'#0f0f11',r:0,a:1,d:40}, BGU = null;
+try { var q = JSON.parse(localStorage.getItem('pl_cust') || 'null'); if (q) S = q; } catch(e) {}
+function mark(box, fn) { [].forEach.call(box.children, function(x) { x.classList.toggle('on', fn(x)); }); }
+function ap() {
+  R.style.setProperty('--green', S.c);
+  R.style.setProperty('--bg', S.b);
+  document.body.style.background = BGU ? 'transparent' : S.b;
+  R.style.setProperty('--dim', (S.d == null ? 40 : S.d) / 100);
+  document.body.classList.toggle('hasbg', !!BGU);
+  R.style.setProperty('--rad', S.r ? '26px' : '12px');
+  document.body.classList.toggle('round', !!S.r);
+  document.body.classList.toggle('noanim', !S.a);
+  mark(document.getElementById('swA'), function(x) { return x.dataset.c === S.c; });
+  mark(document.getElementById('optB'), function(x) { return x.dataset.c === S.b; });
+  mark(document.getElementById('optR'), function(x) { return (x.dataset.r === '1') === !!S.r; });
+  document.getElementById('tgA').classList.toggle('on', !!S.a);
+  try { localStorage.setItem('pl_cust', JSON.stringify(S)); } catch(e) {}
+}
+ap();
+document.getElementById('openCust').onclick = function() { cu.classList.add('on'); cu.scrollTop = 0; };
+document.getElementById('custBack').onclick = function() { cu.classList.remove('on'); };
+document.getElementById('swA').onclick = function(e) { if (e.target.dataset.c) { S.c = e.target.dataset.c; ap(); } };
+document.getElementById('optB').onclick = function(e) { if (e.target.dataset.c) { S.b = e.target.dataset.c; ap(); } };
+document.getElementById('optR').onclick = function(e) { if (e.target.dataset.r !== undefined) { S.r = +e.target.dataset.r; ap(); } };
+document.getElementById('tgA').onclick = function() { S.a = S.a ? 0 : 1; ap(); };
+
+/* фон: фото / видео (файл хранится в IndexedDB) */
+var bgm=document.getElementById('bgm'),bgT=document.getElementById('bgT'),bgS=document.getElementById('bgS'),bgDel=document.getElementById('bgDel'),bgD=document.getElementById('bgD'),bgIco=bgT.innerHTML;
+function idb(cb){try{var r=indexedDB.open('pl_bg',1);r.onupgradeneeded=function(){r.result.createObjectStore('f')};r.onsuccess=function(){cb(r.result)};r.onerror=function(){cb(null)}}catch(e){cb(null)}}
+function idbGet(cb){idb(function(d){if(!d)return cb(null);try{var q=d.transaction('f').objectStore('f').get('bg');q.onsuccess=function(){cb(q.result||null)};q.onerror=function(){cb(null)}}catch(e){cb(null)}})}
+function idbSet(b,cb){idb(function(d){if(!d)return cb&&cb(false);try{var t=d.transaction('f','readwrite'),o=t.objectStore('f');if(b)o.put(b,'bg');else o.delete('bg');t.oncomplete=function(){cb&&cb(true)};t.onerror=function(){cb&&cb(false)}}catch(e){cb&&cb(false)}})}
+function mk(file,bg){var v=file.type.indexOf('video')===0,e=document.createElement(v?'video':'img');
+ if(v){e.muted=true;e.defaultMuted=true;e.loop=bg;e.playsInline=true;e.setAttribute('muted','');e.setAttribute('playsinline','');e.setAttribute('webkit-playsinline','');e.preload=bg?'auto':'metadata';if(bg){e.autoplay=true;e.disablePictureInPicture=true}}
+ else e.alt='';
+ e.src=BGU+(v&&!bg?'#t=0.1':'');return e}
+var PN=[].slice.call(document.querySelectorAll('.player,.lyr,.sett,.cust,.sdet,.drawer')).map(function(p){var d=document.createElement('div');d.className='bgc';p.insertBefore(d,p.firstChild);return d});
+var io=window.IntersectionObserver?new IntersectionObserver(function(es){es.forEach(function(en){var v=en.target.querySelector('video');if(!v)return;if(en.isIntersecting){var p=v.play();if(p&&p.catch)p.catch(function(){})}else v.pause()})}):null;
+if(io)PN.forEach(function(d){io.observe(d)});
+function showBg(file){if(BGU)URL.revokeObjectURL(BGU);BGU=URL.createObjectURL(file);
+ bgm.innerHTML='';var e=mk(file,true);bgm.appendChild(e);if(e.play){var p=e.play();if(p&&p.catch)p.catch(function(){})}
+ PN.forEach(function(d){d.innerHTML='';var c=mk(file,true);if(c.pause&&io){c.autoplay=false;c.preload='auto'}d.appendChild(c)});
+ bgT.innerHTML='';bgT.appendChild(mk(file,false));
+ bgS.textContent=(file.type.indexOf('video')===0?'Видео':'Фото')+(file.name?' · '+file.name:'');bgDel.hidden=false;ap()}
+function clearBg(){if(BGU)URL.revokeObjectURL(BGU);BGU=null;bgm.innerHTML='';PN.forEach(function(d){d.innerHTML=''});bgT.innerHTML=bgIco;bgS.textContent='Не выбрано';bgDel.hidden=true;ap()}
+var bgF=document.getElementById('bgF');
+document.getElementById('bgPick').onclick=function(){bgF.click()};
+bgF.onchange=function(){var f=bgF.files&&bgF.files[0];bgF.value='';if(!f)return;
+ if(!/^(image|video)\//.test(f.type)){typeof toast==='function'&&toast('Нужно фото или видео');return}
+ showBg(f);idbSet(f,function(ok){if(!ok&&typeof toast==='function')toast('Фон не сохранится после перезагрузки')})};
+bgDel.onclick=function(){clearBg();idbSet(null)};
+bgD.value=S.d==null?40:S.d;
+bgD.oninput=function(){S.d=+bgD.value;ap()};
+document.addEventListener('visibilitychange',function(){var v=bgm.querySelector('video');if(!v)return;if(document.hidden)v.pause();else{var p=v.play();if(p&&p.catch)p.catch(function(){})}});
+idbGet(function(f){if(f&&f.type)showBg(f)});
+})();
+(function(){var r='',h;for(var i=0;i<48;i++){h=5+Math.round(Math.abs(Math.sin(i*.9)*Math.cos(i*.37))*17);r+='<rect x="'+i*2.5+'" y="'+(12-h/2)+'" width="1.6" height="'+h+'" rx=".8"/>'}
+var u='url("data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" preserveAspectRatio="none">'+r+'</svg>')+'")';
+document.querySelectorAll('.trk').forEach(function(e){e.style.webkitMaskImage=e.style.maskImage=u})})();
+</script>
+</body>
+</html>
