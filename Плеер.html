@@ -538,10 +538,10 @@ function progress(){var d=a.duration||0,t=a.currentTime||0,p=d?100*t/d:0;['fill'
 function openDB(cb){var r=indexedDB.open('kimo_audio',1);r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('tracks'))r.result.createObjectStore('tracks')};r.onsuccess=function(){cb(r.result)};r.onerror=function(){toast('Хранилище аудио недоступно')}}
 function saveBlob(id,blob,cb){openDB(function(db){var tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(blob,id);tx.oncomplete=function(){db.close();cb(true)};tx.onerror=function(){db.close();cb(false)}})}
 function getBlob(id,cb){openDB(function(db){var r=db.transaction('tracks').objectStore('tracks').get(id);r.onsuccess=function(){var b=r.result;db.close();cb(b)};r.onerror=function(){db.close();cb(null)}})}
-function play(id){var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(!blob){toast('Аудиофайл не найден');return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
+function play(id){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(!blob){toast('Аудиофайл не найден');return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
 window.KIMO_PLAY_TRACK=play;
 window.KIMO_STOP=function(){a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
-function toggle(){if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
+function toggle(){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
 function move(dir){var list=window.KIMO_TRACKS||[];if(!list.length)return;var i=list.findIndex(function(t){return t.id===currentId});if(shuffle&&list.length>1){var n=i;while(n===i)n=Math.floor(Math.random()*list.length);i=n}else i=(i+dir+list.length)%list.length;play(list[i].id)}
 gid('pp').onclick=toggle;gid('pb').onclick=toggle;gid('pb2').onclick=toggle;gid('prv').onclick=function(){if(a.currentTime>3)a.currentTime=0;else move(-1)};gid('nxt').onclick=function(){move(1)};
 gid('shuf').onclick=function(){shuffle=!shuffle;this.classList.toggle('g',shuffle)};
@@ -1163,7 +1163,7 @@ idbGet(function(f){if(f&&f.type)showBg(f)});
   }catch(err){analyser=null;return false}
  }
  function animate(now){
-  if(!playing){frame=0;return}
+  if(a.paused){frame=0;return}
   if(!last||now-last>65){
    last=now;
    if(analyser){analyser.getByteFrequencyData(freq);applyWave(freq)}
@@ -1176,6 +1176,7 @@ idbGet(function(f){if(f&&f.type)showBg(f)});
   if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(function(){});
   if(!frame)frame=requestAnimationFrame(animate);
  }
+ window.KIMO_VISUALIZER_START=start;
  a.addEventListener('play',start);
  a.addEventListener('pause',function(){if(frame)cancelAnimationFrame(frame);frame=0});
  applyWave(null);
