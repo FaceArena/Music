@@ -255,7 +255,7 @@ body.noanim *{animation:none!important;transition:none!important}
   </div>
 </div>
 
-<input id="audioFiles" type="file" accept="audio/*" multiple hidden><audio id="audio" preload="metadata"></audio><div class="mini">
+<input id="audioFiles" type="file" multiple hidden><audio id="audio" preload="metadata"></audio><div class="mini">
   <div class="art"></div>
   <div class="t"><b id="miniTitle">Выбери трек</b><span id="miniArtist">Локальная медиатека</span></div>
   <button aria-label="Устройства"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg></button>
@@ -446,7 +446,44 @@ function saveTracks(){try{localStorage.setItem('kimo_tracks',JSON.stringify(wind
 function drawTracks(){var box=gid('localTracks');box.innerHTML=window.KIMO_TRACKS.length?'<div class="rch"><span>Мои аудиофайлы · '+window.KIMO_TRACKS.length+'</span></div>'+window.KIMO_TRACKS.map(function(t){return '<div class="li" data-local-id="'+esc(t.id)+'"><div class="c" style="background:#2c3a6b">♪</div><div class="lt"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div><button class="ib" data-del="'+esc(t.id)+'" aria-label="Удалить">×</button></div>'}).join(''):'<div class="empty">Медиатека пуста. Нажми +, чтобы импортировать музыку.</div>'}
 drawTracks();
 gid('importTracks').onclick=function(){gid('audioFiles').click()};
-gid('audioFiles').onchange=function(){var files=[].slice.call(this.files||[]);this.value='';var count=0;files.forEach(function(file){if(!file.type.startsWith('audio/')&&!/\.(mp3|m4a|aac|wav|ogg|flac|opus)$/i.test(file.name))return;var id='local_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2);var req=indexedDB.open('kimo_audio',1);req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};req.onsuccess=function(){var db=req.result,tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(file,id);tx.oncomplete=function(){db.close();window.KIMO_TRACKS.push({id:id,title:file.name.replace(/\.[^.]+$/,''),artist:'Локальный файл',name:file.name});saveTracks();count++;drawTracks();renderS();toast('Трек добавлен в медиатеку')};tx.onerror=function(){db.close();toast('Не удалось сохранить аудиофайл')}}});};
+gid('audioFiles').onchange=function(){
+ var files=[].slice.call(this.files||[]);this.value='';
+ if(!files.length)return;
+ // iOS Files may report downloaded audio as application/octet-stream.
+ // Do not rely on the MIME filter: validate the extension ourselves.
+ var allowed=/\.(mp3|m4a|m4b|aac|wav|aiff?|caf|flac|ogg|opus|amr|3gp)$/i;
+ var accepted=files.filter(function(file){return (file.type&&file.type.indexOf('audio/')===0)||allowed.test(file.name||'')});
+ var rejected=files.length-accepted.length;
+ if(!accepted.length){toast('Не найдены поддерживаемые аудиофайлы');return}
+ var saved=0,failed=0;
+ Promise.all(accepted.map(function(file){
+  return new Promise(function(resolve){
+   var id='local_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2);
+   var req;
+   try{req=indexedDB.open('kimo_audio',1)}catch(err){failed++;resolve();return}
+   req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};
+   req.onerror=function(){failed++;resolve()};
+   req.onblocked=function(){failed++;resolve()};
+   req.onsuccess=function(){
+    var db=req.result,tx;
+    try{tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(file,id)}
+    catch(err){db.close();failed++;resolve();return}
+    tx.oncomplete=function(){
+     db.close();
+     window.KIMO_TRACKS.push({id:id,title:file.name.replace(/\.[^.]+$/,''),artist:'Локальный файл',name:file.name});
+     saved++;resolve();
+    };
+    tx.onerror=tx.onabort=function(){db.close();failed++;resolve()};
+   };
+  });
+ })).then(function(){
+  if(saved) {saveTracks();drawTracks();renderS()}
+  var message=saved+' из '+files.length+' файлов добавлено';
+  if(rejected)message+=' · пропущено: '+rejected;
+  if(failed)message+=' · ошибок: '+failed;
+  toast(message);
+ });
+};
 gid('localTracks').onclick=function(e){var d=e.target.closest('[data-del]');if(d){var id=d.dataset.del;if(window.KIMO_CURRENT_ID===id&&window.KIMO_STOP)window.KIMO_STOP();if(window.kimoRemoveLike)window.kimoRemoveLike(id);window.KIMO_TRACKS=window.KIMO_TRACKS.filter(function(t){return t.id!==id});saveTracks();var req=indexedDB.open('kimo_audio',1);req.onsuccess=function(){var db=req.result,tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').delete(id);tx.oncomplete=function(){db.close()}};drawTracks();renderS();return}var row=e.target.closest('[data-local-id]');if(row)window.KIMO_PLAY_TRACK(row.dataset.localId)};
 /* library */
 var LF=0,LS=0,LG=0,NP=0;
