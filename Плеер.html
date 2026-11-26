@@ -683,7 +683,7 @@ var sx=null;dr.addEventListener('touchstart',function(e){sx=e.touches[0].clientX
 dr.addEventListener('touchend',function(e){if(sx!==null&&sx-e.changedTouches[0].clientX>60)dOpen(false);sx=null});
 
 /* ===== LIKES ===== */
-var LIKES = [];
+var LIKES = [], likesSortMode = 0;
 try { LIKES = JSON.parse(localStorage.getItem('pl_likes') || '[]').filter(function(x){return x&&typeof x.id==='string'&&typeof x.title==='string'&&x.id!=='stoboy'&&x.title!=='С тобой'&&x.title!=='Текст песни'}); } catch(e) {}
 function saveLikes() { try { localStorage.setItem('pl_likes', JSON.stringify(LIKES)); } catch(e) {} }
 
@@ -794,7 +794,9 @@ function renderLikes(anim) {
   }
   if (empty) empty.style.display = 'none';
   var c = anim ? ' a' : '';
-  var h = LIKES.map(function(t, i) {
+  var sortedLikes = LIKES.slice();
+  if (likesSortMode === 1) sortedLikes.sort(function(a, b) { return a.title.localeCompare(b.title, 'ru'); });
+  var h = sortedLikes.map(function(t, i) {
     var safeColor = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(t.color || '') ? t.color : '#2c3a6b';
     var safeId = esc(t.id);
     return '<div class="li' + c + '" style="--d:' + i + '" data-like-id="' + safeId + '">' +
@@ -809,6 +811,14 @@ function renderLikes(anim) {
   }).join('');
   list.innerHTML = h;
 }
+
+var likesSortButton = document.getElementById('likesSort');
+var likesSortLabel = document.getElementById('likesSortL');
+if (likesSortButton) likesSortButton.addEventListener('click', function() {
+  likesSortMode = likesSortMode === 0 ? 1 : 0;
+  if (likesSortLabel) likesSortLabel.textContent = likesSortMode === 0 ? 'Недавние' : 'По алфавиту';
+  renderLikes(false);
+});
 
 // Bind clicks once DOM is ready (script is at end of body, so OK)
 (function bindLikes() {
@@ -1139,11 +1149,12 @@ sdetBody.addEventListener('click', function(e) {
   var act = e.target.closest('[data-act]');
   if (act) {
     var a = act.dataset.act;
-    if (a === 'logout') { closeSdet(); toast('Вы вышли из аккаунта'); return; }
-    if (a === 'clearhist') { toast('История прослушивания очищена'); return; }
+    if (a === 'logout') { closeSdet(); toast('Аккаунт не подключён — выход недоступен'); return; }
+    if (a === 'clearhist') { toast('История прослушивания пока не ведётся'); return; }
     if (a === 'clearrc') { RC = []; svRC(); toast('Недавние поиски очищены'); return; }
-    if (a === 'disconnect') { ST.devices = 1; saveST(); updSettingsUI(); toast('Все устройства отключены'); return; }
+    if (a === 'disconnect') { toast('Другие устройства не подключены в локальном режиме'); return; }
     if (a === 'import') { document.getElementById('audioFiles').click(); return; }
+    if (a === 'plus') { toast('Подписка пока не подключена'); return; }
     if (a === 'rename' || a === 'email' || a === 'sub' || a === 'pass' || a === '2fa' ||
         a === 'aboutads' || a === 'privacy' || a === 'terms' || a === 'licenses' || a === 'feedback') {
       toast('Скоро будет доступно');
