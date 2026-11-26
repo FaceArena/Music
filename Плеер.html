@@ -300,13 +300,13 @@ body.noanim *{animation:none!important;transition:none!important}
     <button class="ib sm" id="prv" aria-label="Назад"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 20L9 12l10-8zM6 4v16"/></svg></button>
     <button class="pb" id="pb" aria-label="Играть"><svg viewBox="0 0 24 24"></svg></button>
     <button class="ib sm repeat-control" id="repeatBtn" data-repeat-control type="button" aria-label="Повтор выключен" aria-pressed="false" title="Повтор выключен"></button>
-    <button class="ib sm" aria-label="Таймер"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4M10 2h4M12 2v3"/></svg></button>
+    <button class="ib sm" id="sleepTimer" aria-label="Таймер сна"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4M10 2h4M12 2v3"/></svg></button>
   </div>
   <div class="ctl2 st" style="--i:5">
     <button class="ib" aria-label="Устройства"><svg viewBox="0 0 24 24"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg></button>
     <label class="volume-control"><span>Громкость</span><input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label>
     <span style="flex:1"></span>
-    <button class="ib" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
+    <button class="ib" id="shareTrack" aria-label="Поделиться треком"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
     <button class="ib" id="queueBtn" aria-label="Очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg></button>
   </div>
   <div class="prev st" id="prev" style="--i:6"><b>Предпросмотр текста</b><p id="pv">Текст песни появится здесь</p><button class="show-lyrics" id="showLyrics" type="button">Показать текст</button></div>
@@ -315,7 +315,7 @@ body.noanim *{animation:none!important;transition:none!important}
 <section class="lyr" id="lyr" aria-label="Текст песни">
   <div class="lh"><button class="ib" id="lclose" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button><div>Текст песни<small id="lyricSubtitle">Выбери трек</small></div><button class="ib" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
   <div class="lw" id="lw"></div>
-  <div class="chips"><button class="chp"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>Поделиться</button><button class="chp" id="tr"><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 8 8M12 5c-1 4-4 7-8 8M13 21l4-10 4 10M14.5 18h5"/></svg>Перевести</button></div>
+  <div class="chips"><button class="chp" id="shareLyrics"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>Поделиться</button><button class="chp" id="tr"><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 8 8M12 5c-1 4-4 7-8 8M13 21l4-10 4 10M14.5 18h5"/></svg>Перевести</button></div>
   <div class="scrub" style="margin-top:22px"><div class="trk"><i id="fill2"></i></div><div class="tm"><span id="t1b">0:05</span><span id="t2b">-3:39</span></div></div>
   <button class="pb" id="pb2" aria-label="Играть"><svg viewBox="0 0 24 24"></svg></button>
 </section>
@@ -557,10 +557,14 @@ gid('lpl').onclick=openNew;
 
 /* Real audio playback */
 (function(){
-var a=gid('audio'),playing=false,currentId=null,objectUrl=null,shuffle=false,playRequest=0,loading=false;
+var a=gid('audio'),playing=false,currentId=null,objectUrl=null,shuffle=false,playRequest=0,loading=false,sleepTimer=null;
 function audioDiagnostic(prefix,error){var e=a.error,code=e?e.code:0,media=code===1?'MEDIA_ERR_ABORTED':code===2?'MEDIA_ERR_NETWORK':code===3?'MEDIA_ERR_DECODE':code===4?'MEDIA_ERR_SRC_NOT_SUPPORTED':'нет';var name=error&&error.name?error.name:'нет';var msg=error&&error.message?String(error.message).slice(0,90):'';return prefix+' · '+name+' · media='+media+'('+code+') · ready='+a.readyState+' · network='+a.networkState+(msg?' · '+msg:'')};
 a.addEventListener('error',function(){var e=a.error;if(e)console.error('Kimo audio element error:',e.code,e.message,'readyState='+a.readyState,'networkState='+a.networkState,'src='+String(a.currentSrc||'').split('?')[0]);if(currentId&&String(currentId).indexOf('audius_')===0)toast(audioDiagnostic('Audius stream error'))});
 function fmt(v){v=Math.max(0,Math.floor(v||0));return Math.floor(v/60)+':'+('0'+v%60).slice(-2)}
+function setSleepTimer(minutes){if(sleepTimer){clearTimeout(sleepTimer);sleepTimer=null}if(!minutes){toast('Таймер сна отключён');return}sleepTimer=setTimeout(function(){sleepTimer=null;a.pause();toast('Таймер сна завершён')},minutes*60*1000);toast('Таймер сна установлен на '+minutes+' мин')}
+gid('sleepTimer').onclick=function(){openSh('<h3>Таймер сна</h3><div class="sa" data-sleep="15"><b>Через 15 минут</b></div><div class="sa" data-sleep="30"><b>Через 30 минут</b></div><div class="sa" data-sleep="45"><b>Через 45 минут</b></div><div class="sa" data-sleep="60"><b>Через 60 минут</b></div><div class="sa" data-sleep="0"><b>Отключить таймер</b></div>');[].forEach.call(sh.querySelectorAll('[data-sleep]'),function(btn){btn.onclick=function(){setSleepTimer(Number(btn.dataset.sleep));closeSh()}})};
+function shareCurrentTrack(withLyrics){var t=track();if(!t){toast('Сначала выбери трек');return}var text=t.title+' — '+t.artist;if(withLyrics&&typeof t.lyrics==='string'&&t.lyrics.trim())text+='\\n\\n'+t.lyrics.trim();var data={title:t.title,text:text,url:location.href};if(navigator.share){try{navigator.share(data).catch(function(error){if(error&&error.name!=='AbortError')toast('Не удалось открыть меню отправки')})}catch(error){toast('Не удалось открыть меню отправки')}return}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text+'\\n'+location.href).then(function(){toast('Ссылка скопирована')}).catch(function(){toast('Не удалось скопировать ссылку')});return}toast('Отправка недоступна в этом браузере')}
+gid('shareTrack').onclick=function(){shareCurrentTrack(false)};gid('shareLyrics').onclick=function(){shareCurrentTrack(true)};gid('tr').onclick=function(){toast('Перевод текста пока не подключён')};[].forEach.call(document.querySelectorAll('button[aria-label="Устройства"]'),function(btn){btn.addEventListener('click',function(){toast('Выбор устройства пока не поддерживается в Kimo')})});
 function track(){return (window.KIMO_TRACKS||[]).find(function(t){return t.id===currentId})}
 function controls(){var path=playing?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M7 4l13 8-13 8z"/>';['pb','pb2'].forEach(function(id){gid(id).querySelector('svg').innerHTML=path});gid('ppi').innerHTML=path;gid('player').classList.toggle('paused',!playing)}
 function labels(){var t=track(),title=t?t.title:'Выбери трек',artist=t?t.artist:'Локальная медиатека',art=t&&typeof t.artwork==='string'?t.artwork:'';var big=gid('player').querySelector('.art2'),mini=gid('miniArt')||document.querySelector('.mini .art');[big,mini].forEach(function(el){if(!el)return;if(art){el.classList.add('has-art');el.style.backgroundImage='url('+JSON.stringify(art)+')'}else{el.classList.remove('has-art');el.style.backgroundImage=''}});['playerTitle','miniTitle','cur','playerHeading'].forEach(function(id){if(gid(id))gid(id).textContent=title});['playerArtist','miniArtist'].forEach(function(id){if(gid(id))gid(id).textContent=artist});if(gid('pv'))gid('pv').textContent=t&&typeof t.lyrics==='string'&&t.lyrics.trim()?t.lyrics.trim().split(/\r?\n/).filter(Boolean).slice(0,2).join(' · '):'Текст песни недоступен';if(gid('lyr')&&gid('lyr').classList.contains('open'))renderLyrics();if(window.kimoTrackChanged)window.kimoTrackChanged(t)}
