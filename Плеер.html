@@ -533,7 +533,7 @@ gid('lpl').onclick=openNew;
 
 /* Real audio playback */
 (function(){
-var a=gid('audio'),playing=false,currentId=null,objectUrl=null,shuffle=false;
+var a=gid('audio'),playing=false,currentId=null,objectUrl=null,shuffle=false,playRequest=0;
 function fmt(v){v=Math.max(0,Math.floor(v||0));return Math.floor(v/60)+':'+('0'+v%60).slice(-2)}
 function track(){return (window.KIMO_TRACKS||[]).find(function(t){return t.id===currentId})}
 function controls(){var path=playing?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M7 4l13 8-13 8z"/>';['pb','pb2'].forEach(function(id){gid(id).querySelector('svg').innerHTML=path});gid('ppi').innerHTML=path;gid('player').classList.toggle('paused',!playing)}
@@ -568,7 +568,7 @@ function renderQueue(){
  var repeatButton=sh.querySelector('[data-repeat-control]');if(repeatButton)repeatButton.onclick=cycleRepeat;syncRepeatControls(false);
  [].forEach.call(sh.querySelectorAll('[data-qadd]'),function(b){b.onclick=function(){addQueue(b.dataset.qadd);renderQueue()}});
  [].forEach.call(sh.querySelectorAll('[data-qremove]'),function(b){b.onclick=function(){queueIds=queueIds.filter(function(id){return id!==b.dataset.qremove});saveQueue();renderQueue()}});
- [].forEach.call(sh.querySelectorAll('[data-qplay]'),function(b){b.onclick=function(){var id=b.dataset.qplay;queueIds=queueIds.filter(function(x){return x!==id});saveQueue();play(id);renderQueue()}});
+ [].forEach.call(sh.querySelectorAll('[data-qplay]'),function(b){b.onclick=function(){var id=b.dataset.qplay;queueIds=queueIds.filter(function(x){return x!==id});saveQueue();play(id,true);renderQueue()}});
  var dragId=null;
  [].forEach.call(sh.querySelectorAll('.qdrag'),function(handle){
   handle.addEventListener('pointerdown',function(e){dragId=handle.parentNode.dataset.qrow;handle.parentNode.classList.add('dragging');try{handle.setPointerCapture(e.pointerId)}catch(ignore){}e.preventDefault()});
@@ -577,10 +577,10 @@ function renderQueue(){
   handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);
  });
 }
-function playNext(){while(queueIds.length){var id=queueIds.shift();saveQueue();if((window.KIMO_TRACKS||[]).some(function(t){return t.id===id})){play(id);return}}move(1,true)}
-function play(id){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(!blob){toast('Аудиофайл не найден');return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
+function playNext(){while(queueIds.length){var id=queueIds.shift();saveQueue();if((window.KIMO_TRACKS||[]).some(function(t){return t.id===id})){play(id,true);return}}move(1,true)}
+function play(id,fromQueue){var request=++playRequest;if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(request!==playRequest)return;if(!blob){toast('Аудиофайл не найден');if(fromQueue)playNext();return}if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id})){if(fromQueue)playNext();return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
 window.KIMO_PLAY_TRACK=play;
-window.KIMO_STOP=function(){a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
+window.KIMO_STOP=function(){playRequest++;a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
 function toggle(){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
 function move(dir,automatic){var list=window.KIMO_TRACKS||[];if(!list.length)return;var i=list.findIndex(function(t){return t.id===currentId});if(i<0){play(list[0].id);return}if(shuffle&&list.length>1){var n=i;while(n===i)n=Math.floor(Math.random()*list.length);i=n}else{var next=i+dir;if(automatic&&repeatMode===0&&dir>0&&next>=list.length)return;i=(next+list.length)%list.length}if(list[i])play(list[i].id)}
 function nextTrack(){if(queueIds.length)playNext();else move(1,false)}
