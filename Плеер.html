@@ -25,7 +25,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 h2{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:34px 20px 12px}
 .row{display:flex;gap:12px;overflow-x:auto;padding:0 20px;scrollbar-width:none;scroll-snap-type:x mandatory;scroll-padding:0 20px}
 .row::-webkit-scrollbar{display:none}
-.card{flex:0 0 148px;scroll-snap-align:start}
+.card{flex:0 0 148px;scroll-snap-align:start;cursor:pointer}.cover img{display:block;width:100%;height:100%;object-fit:cover}
 .cover{width:148px;height:148px;border-radius:var(--rad);position:relative;overflow:hidden;color:#101012;transition:transform .5s var(--pop)}
 .card:active .cover{transform:scale(.95);transition-duration:.12s}
 .cover.rd{border-radius:50%;display:grid;place-items:center;font-size:44px;font-weight:600}
@@ -70,6 +70,10 @@ h2{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:34px 20px 12px}
 .art2 .moon{position:absolute;left:50%;top:20%;width:22%;aspect-ratio:1;margin-left:-11%;border-radius:50%;background:var(--tx)}
 .art2 .glow{position:absolute;left:50%;top:68%;width:14%;height:2.5%;margin-left:-7%;border-radius:3px;background:var(--tx);opacity:.45}
 .art2 .p1,.art2 .p2{display:none}
+.art2.has-art{background-size:cover;background-position:center;background-repeat:no-repeat}
+.art2.has-art .hill,.art2.has-art .moon,.art2.has-art .glow{display:none}
+.mini .art.has-art{background-size:cover;background-position:center;background-repeat:no-repeat}
+.mini .art.has-art:after{display:none}
 .cur{font-size:clamp(18px,5vw,22px);font-weight:500;letter-spacing:-.02em;margin:16px 0 0;min-height:30px;line-height:1.25;flex:none}
 .cur.sw{animation:swp .6s var(--sp)}@keyframes swp{from{opacity:0;transform:translateY(12px)}}
 .meta{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex:none}
@@ -117,6 +121,21 @@ body.pushed #home,body.pushed #lib,body.pushed #search,body.pushed #stub{transfo
 .a{animation:rin .55s var(--sp) both;animation-delay:calc(var(--d)*35ms)}@keyframes rin{from{opacity:0;transform:translateY(10px)}}
 mark{background:none;color:var(--green)}
 .empty{padding:30px 20px;color:var(--mute);font-size:15px}
+.aud-config{margin:8px 16px 12px;padding:12px;border-radius:16px;background:var(--sf);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aud-config-copy{flex:1 0 100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.aud-config-copy b{font-size:14px}.aud-config-copy span{font-size:12px;color:var(--mute);text-align:right}
+.aud-config input{flex:1;min-width:0;height:38px;border:1px solid var(--ln);border-radius:11px;background:#0002;color:var(--tx);padding:0 10px;font:inherit;font-size:13px;outline:0}
+.aud-config button{height:38px;border:0;border-radius:11px;padding:0 12px;background:var(--tx);color:var(--bg);font:600 12px Onest,sans-serif}
+.aud-config button[hidden]{display:none}
+.aud-section{padding:15px 20px 5px;font-size:13px;color:var(--mute);font-weight:600}
+.rs.aud-row{cursor:pointer}.rs.aud-row:active{background:var(--sf)}
+.aud-cover{width:50px;height:50px;object-fit:cover;border-radius:11px;flex:none;background:var(--sf2)}
+.aud-play{font-size:11px;color:var(--green);font-weight:600;flex:none}
+.aud-error{padding:12px 20px;color:var(--mute);font-size:13px}
+.aud-load-more{display:block;width:calc(100% - 32px);margin:14px 16px;padding:14px;border:1px solid var(--ln);border-radius:14px;background:var(--sf);color:var(--tx);font:600 14px Onest,-apple-system,sans-serif;transition:transform .25s var(--pop),background .2s}
+.aud-load-more:active{transform:scale(.98);background:var(--sf2)}
+.aud-load-more:disabled{opacity:.55;cursor:wait}
+
 #stubt{margin:120px 28px;font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
 .lqw{display:none;padding:12px 16px 0}.lqw.on{display:block;animation:pin .3s}
 .lqw input{width:100%;height:42px;border:0;border-radius:14px;background:var(--sf2);color:var(--tx);font:inherit;font-size:16px;padding:0 14px;outline:0}
@@ -234,8 +253,10 @@ body.noanim *{animation:none!important;transition:none!important}
 <div id="search" class="page">
   <div class="sbar"><div class="sin"><input id="q" value="" autocomplete="off" spellcheck="false" placeholder="Исполнители, треки" aria-label="Поиск"><button id="qx" aria-label="Очистить"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><button class="cancel" id="cancel">Отмена</button></div>
   <div class="top" id="schips" style="display:none"><button class="chip on" data-f="0">Все</button><button class="chip" data-f="1">Треки</button><button class="chip" data-f="2">Исполнители</button></div>
+  <div class="aud-config" id="audConfig"><div class="aud-config-copy"><b>Audius</b><span id="audStatus">Подключи API Key для поиска музыки</span></div><input id="audKeyInput" type="password" autocomplete="off" placeholder="Audius API Key" aria-label="Audius API Key"><button id="audKeySave" type="button">Сохранить</button><button id="audKeyClear" type="button" hidden>×</button></div>
   <div id="sug"></div>
   <div id="res"></div>
+  <div id="audiusResults"></div>
 </div>
 <div id="lib" class="page">
   <div class="lh2"><div class="av">K</div><h1>Медиатека</h1><button class="ib" id="importTracks" aria-label="Импорт аудио"><svg viewBox="0 0 24 24"><path d="M12 4v11M8 11l4 4 4-4M4 20h16"/></svg></button><button class="ib" id="lsb" aria-label="Поиск"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button><button class="ib" id="lpl" aria-label="Создать плейлист"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></button></div>
@@ -275,17 +296,17 @@ body.noanim *{animation:none!important;transition:none!important}
   <div class="meta st" style="--i:2"><div><div class="ttl" id="playerTitle">Выбери трек</div><div class="ar" id="playerArtist">Локальная медиатека</div></div><button class="ib big" id="like" aria-label="Лайк"><svg viewBox="0 0 24 24" id="likei" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg></button></div>
   <div class="scrub st" style="--i:3"><div class="trk"><i id="fill"></i></div><div class="tm"><span id="t1">0:05</span><span id="t2">-3:39</span></div></div>
   <div class="ctl st" style="--i:4">
-    <button class="ib sm g" id="shuf" aria-label="Перемешать"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+    <button class="ib sm" id="shuf" aria-label="Перемешать" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
     <button class="ib sm" id="prv" aria-label="Назад"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 20L9 12l10-8zM6 4v16"/></svg></button>
     <button class="pb" id="pb" aria-label="Играть"><svg viewBox="0 0 24 24"></svg></button>
     <button class="ib sm repeat-control" id="repeatBtn" data-repeat-control type="button" aria-label="Повтор выключен" aria-pressed="false" title="Повтор выключен"></button>
-    <button class="ib sm" aria-label="Таймер"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4M10 2h4M12 2v3"/></svg></button>
+    <button class="ib sm" id="sleepTimer" aria-label="Таймер сна"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7.5"/><path d="M12 10v4M10 2h4M12 2v3"/></svg></button>
   </div>
   <div class="ctl2 st" style="--i:5">
     <button class="ib" aria-label="Устройства"><svg viewBox="0 0 24 24"><rect x="12" y="6" width="9" height="14" rx="2"/><circle cx="16.5" cy="14.5" r="2"/><path d="M8 5H4v10h4"/></svg></button>
     <label class="volume-control"><span>Громкость</span><input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label>
     <span style="flex:1"></span>
-    <button class="ib" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
+    <button class="ib" id="shareTrack" aria-label="Поделиться треком"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
     <button class="ib" id="queueBtn" aria-label="Очередь"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 10h14M5 15h14M8 20h8"/></svg></button>
   </div>
   <div class="prev st" id="prev" style="--i:6"><b>Предпросмотр текста</b><p id="pv">Текст песни появится здесь</p><button class="show-lyrics" id="showLyrics" type="button">Показать текст</button></div>
@@ -294,7 +315,7 @@ body.noanim *{animation:none!important;transition:none!important}
 <section class="lyr" id="lyr" aria-label="Текст песни">
   <div class="lh"><button class="ib" id="lclose" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button><div>Текст песни<small id="lyricSubtitle">Выбери трек</small></div><button class="ib" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
   <div class="lw" id="lw"></div>
-  <div class="chips"><button class="chp"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>Поделиться</button><button class="chp" id="tr"><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 8 8M12 5c-1 4-4 7-8 8M13 21l4-10 4 10M14.5 18h5"/></svg>Перевести</button></div>
+  <div class="chips"><button class="chp" id="shareLyrics"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>Поделиться</button><button class="chp" id="tr"><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 8 8M12 5c-1 4-4 7-8 8M13 21l4-10 4 10M14.5 18h5"/></svg>Перевести</button></div>
   <div class="scrub" style="margin-top:22px"><div class="trk"><i id="fill2"></i></div><div class="tm"><span id="t1b">0:05</span><span id="t2b">-3:39</span></div></div>
   <button class="pb" id="pb2" aria-label="Играть"><svg viewBox="0 0 24 24"></svg></button>
 </section>
@@ -424,20 +445,23 @@ function showPage(i){
 }
 
 
-var SF=0,RC=[];
-try{RC=JSON.parse(localStorage.getItem('pl_rc')||'[]')}catch(e){}
+var SF=0,RC=[],audiusTimer=null,audiusController=null,audiusHits=[],audiusOffset=0,audiusQuery='',audiusHasMore=false,audiusPageSize=50;
+try{var savedRC=JSON.parse(localStorage.getItem('pl_rc')||'[]');RC=Array.isArray(savedRC)?savedRC.filter(function(x){return typeof x==='string'&&x.trim()}).slice(0,8):[]}catch(e){RC=[]}
 function esc(t){return String(t).replace(/[<>&"]/g,function(c){return '&#'+c.charCodeAt(0)+';'})}
 function svRC(){try{localStorage.setItem('pl_rc',JSON.stringify(RC))}catch(e){}}
-function renderS(){
- var q=gid('q').value.trim().toLowerCase();
- gid('schips').style.display=q?'flex':'none';
- gid('qx').style.visibility=gid('q').value?'visible':'hidden';
- var list=(window.KIMO_TRACKS||[]).filter(function(t){return (!q||(t.title+' '+t.artist).toLowerCase().includes(q))&&(!SF||SF===1)});
- gid('sug').innerHTML='';
- gid('res').innerHTML=list.length?list.map(function(t){return '<div class="rs" data-track-id="'+esc(t.id)+'"><div class="av2"></div><div class="rt"><b>'+esc(t.title)+'</b><span>Трек • '+esc(t.artist)+'</span></div></div>'}).join(''):'<div class="empty">'+(q?'В локальной медиатеке ничего не найдено.':'Импортируй аудиофайлы, чтобы искать их здесь.')+'</div>';
-}
+function audiusKey(){try{return localStorage.getItem('kimo_audius_key')||''}catch(e){return ''}}
+function setAudiusStatus(){var key=audiusKey(),s=gid('audStatus'),i=gid('audKeyInput'),b=gid('audKeyClear');if(s)s.textContent=key?'API Key сохранён на этом устройстве':'Подключи API Key для поиска музыки';if(i)i.placeholder=key?'Ключ сохранён · можно заменить':'Audius API Key';if(b)b.hidden=!key}
+function rememberAudiusTracks(items){var cache=[];try{var stored=JSON.parse(localStorage.getItem('kimo_audius_cache')||'[]');cache=Array.isArray(stored)?stored.filter(function(t){return t&&t.source==='audius'&&typeof t.id==='string'&&typeof t.audiusId==='string'}):[]}catch(e){cache=[]}var incoming=Array.isArray(items)?items:[];incoming.forEach(function(t){if(!t||t.source!=='audius'||typeof t.id!=='string'||typeof t.audiusId!=='string')return;var i=cache.findIndex(function(x){return x.id===t.id});if(i>=0)cache[i]=t;else cache.unshift(t)});cache=cache.slice(0,500);try{localStorage.setItem('kimo_audius_cache',JSON.stringify(cache))}catch(e){}var current=Array.isArray(window.KIMO_TRACKS)?window.KIMO_TRACKS:[],local=current.filter(function(t){return t&&t.source!=='audius'}),all=current.filter(function(t){return t&&t.source==='audius'}).concat(incoming,cache),byId=Object.create(null);all.forEach(function(t){if(t&&t.source==='audius'&&typeof t.id==='string'&&typeof t.audiusId==='string')byId[t.id]=t});window.KIMO_TRACKS=local.concat(Object.keys(byId).map(function(id){return byId[id]}))}
+function renderHomeAudius(items){var home=gid('r1');if(!home)return;if(!items.length){home.innerHTML='<div class="empty">Пока нет доступных треков Audius.</div>';return}home.innerHTML=items.slice(0,12).map(function(t){return '<div class="card" data-audius-id="'+esc(t.id)+'"><div class="cover"><img src="'+esc(t.artwork||'')+'" alt="" loading="lazy"></div><b>'+esc(t.title)+'</b><p>'+esc(t.artist)+'</p></div>'}).join('')}
+function renderAudius(items){var box=gid('audiusResults');if(!box)return;if(!audiusQuery)renderHomeAudius(items);var html='<div class="aud-section">МУЗЫКА ИЗ AUDIUS</div>';html+=items.length?items.map(function(t){return '<div class="rs aud-row" data-audius-id="'+esc(t.id)+'"><img class="aud-cover" src="'+esc(t.artwork||'')+'" alt="" loading="lazy"><div class="rt"><b>'+esc(t.title)+'</b><span>Трек • '+esc(t.artist)+'</span></div><span class="aud-play">▶</span></div>'}).join(''):'<div class="aud-error">'+(audiusQuery?'По этому запросу пока нет доступных треков.':'Audius пока не вернул популярные треки.')+'</div>';if(audiusHasMore)html+='<button type="button" class="aud-load-more" data-audius-more>Показать ещё</button>';box.innerHTML=html}
+function searchAudius(query,append){clearTimeout(audiusTimer);if(audiusController){audiusController.abort();audiusController=null}var box=gid('audiusResults'),key=audiusKey();query=(query||'').trim();if(query&&query.length<2){audiusQuery=query;audiusOffset=0;audiusHasMore=false;audiusHits=[];if(box)box.innerHTML='';return}if(!key){audiusQuery=query;audiusOffset=0;audiusHasMore=false;audiusHits=[];if(box)box.innerHTML='<div class="aud-error">Введи API Key выше, чтобы открыть каталог Audius.</div>';return}if(!append){audiusQuery=query;audiusOffset=0;audiusHasMore=false;audiusHits=[]}else if(query!==audiusQuery||!audiusHasMore)return;audiusTimer=setTimeout(function(){var controller=new AbortController();audiusController=controller;if(box&&!append)box.innerHTML='<div class="aud-error">'+(query?'Ищем в Audius…':'Загружаем популярную музыку…')+'</div>';else if(box){var more=box.querySelector('[data-audius-more]');if(more){more.textContent='Загружаем…';more.disabled=true}}var endpoint=(query?'https://api.audius.co/v1/tracks/search?query='+encodeURIComponent(query):'https://api.audius.co/v1/tracks/trending?time=week')+'&limit='+audiusPageSize+'&offset='+audiusOffset;fetch(endpoint,{headers:{'x-api-key':key},signal:controller.signal}).then(function(response){if(!response.ok)throw new Error('HTTP '+response.status);return response.json()}).then(function(json){if(controller.signal.aborted||gid('q').value.trim()!==query||query!==audiusQuery)return;var rows=Array.isArray(json.data)?json.data:[];var mapped=rows.filter(function(t){return t&&t.id&&t.is_streamable!==false&&!t.is_stream_gated}).map(function(t){var id='audius_'+String(t.id),user=t.user||{};return {id:id,source:'audius',audiusId:String(t.id),title:t.title||'Без названия',artist:user.name||t.artist_name||'Неизвестный исполнитель',artwork:(t.artwork&&(t.artwork['480x480']||t.artwork._480x480||t.artwork['150x150']||t.artwork._150x150))||'',duration:Number(t.duration)||0,streamable:t.is_streamable!==false,streamUrl:t.stream&&typeof t.stream.url==='string'?t.stream.url:''}});var known=Object.create(null);audiusHits.forEach(function(t){known[t.id]=true});mapped=mapped.filter(function(t){if(known[t.id])return false;known[t.id]=true;return true});audiusHits=audiusHits.concat(mapped);audiusOffset+=rows.length;audiusHasMore=rows.length===audiusPageSize;rememberAudiusTracks(mapped);renderAudius(audiusHits)}).catch(function(error){if(error.name==='AbortError')return;if(box){var more=box.querySelector('[data-audius-more]');if(more){more.disabled=false;more.textContent='Повторить загрузку'}else if(!append)box.innerHTML='';box.insertAdjacentHTML('beforeend','<div class="aud-error">Audius: '+esc(error.message||'ошибка запроса')+'. Проверь API Key и соединение.</div>')}})},query?320:0)}
+
+function renderS(){var raw=gid('q').value.trim(),q=raw.toLowerCase();gid('schips').style.display=q?'flex':'none';gid('qx').style.visibility=raw?'visible':'hidden';var list=(window.KIMO_TRACKS||[]).filter(function(t){return t.source!=='audius'&&(!q||(t.title+' '+t.artist).toLowerCase().includes(q))&&(!SF||SF===1)});gid('sug').innerHTML='';gid('res').innerHTML=list.length?list.map(function(t){return '<div class="rs" data-track-id="'+esc(t.id)+'"><div class="av2"></div><div class="rt"><b>'+esc(t.title)+'</b><span>Трек • '+esc(t.artist)+'</span></div></div>'}).join(''):(q?'<div class="empty">В локальной медиатеке ничего не найдено.</div>':'<div class="empty">Импортируй аудиофайлы или найди музыку в Audius.</div>');searchAudius(raw)}
+gid('audKeySave').onclick=function(){var input=gid('audKeyInput'),key=(input.value||'').trim();if(!key){toast('Вставь Audius API Key');return}try{localStorage.setItem('kimo_audius_key',key)}catch(e){toast('Не удалось сохранить ключ');return}input.value='';setAudiusStatus();toast('Audius подключён');renderS()};
+gid('audKeyClear').onclick=function(){clearTimeout(audiusTimer);if(audiusController){audiusController.abort();audiusController=null}audiusHits=[];audiusOffset=0;audiusHasMore=false;try{localStorage.removeItem('kimo_audius_key')}catch(e){}setAudiusStatus();gid('audiusResults').innerHTML='';toast('API Key удалён')};setAudiusStatus();if(audiusKey())searchAudius('');
 gid('schips').onclick=function(e){var b=e.target.closest('.chip');if(!b)return;SF=+b.dataset.f;[].forEach.call(this.children,function(x){x.classList.toggle('on',+x.dataset.f===SF)});renderS()};
-gid('res').onclick=function(e){var r=e.target.closest('[data-track-id]');if(r&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(r.dataset.trackId)};
+function playAudiusRow(e){var r=e.target.closest('[data-audius-id]');if(!r)return;var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===r.dataset.audiusId});if(t&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(t.id)}
+gid('res').onclick=function(e){var r=e.target.closest('[data-track-id]');if(r&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(r.dataset.trackId)};gid('audiusResults').onclick=function(e){if(e.target.closest('[data-audius-more]')){searchAudius(audiusQuery,true);return}playAudiusRow(e)};gid('r1').onclick=playAudiusRow;
 gid('q').oninput=renderS;
 gid('q').onkeydown=function(e){if(e.key==='Enter'){RC.unshift(this.value.trim());RC=RC.filter(Boolean).slice(0,8);svRC()}};
 gid('qx').onclick=function(){gid('q').value='';renderS()};
@@ -445,9 +469,10 @@ gid('cancel').onclick=function(){selectTab(0)};
 
 /* Local audio library: metadata in localStorage, audio blobs in IndexedDB. */
 window.KIMO_TRACKS=[];
-try{window.KIMO_TRACKS=JSON.parse(localStorage.getItem('kimo_tracks')||'[]')}catch(e){}
-function saveTracks(){try{localStorage.setItem('kimo_tracks',JSON.stringify(window.KIMO_TRACKS))}catch(e){toast('Не удалось сохранить список треков')}}
-function drawTracks(){var box=gid('localTracks');box.innerHTML=window.KIMO_TRACKS.length?'<div class="rch"><span>Мои аудиофайлы · '+window.KIMO_TRACKS.length+'</span></div>'+window.KIMO_TRACKS.map(function(t){return '<div class="li" data-local-id="'+esc(t.id)+'"><div class="c" style="background:#2c3a6b">♪</div><div class="lt"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div><button class="ib" data-del="'+esc(t.id)+'" aria-label="Удалить">×</button></div>'}).join(''):'<div class="empty">Медиатека пуста. Нажми +, чтобы импортировать музыку.</div>'}
+try{var savedTracks=JSON.parse(localStorage.getItem('kimo_tracks')||'[]');window.KIMO_TRACKS=Array.isArray(savedTracks)?savedTracks.filter(function(t){return t&&typeof t.id==='string'&&typeof t.title==='string'&&t.source!=='audius'}).map(function(t){return Object.assign({},t,{artist:typeof t.artist==='string'?t.artist:'Локальный файл'})}):[]}catch(e){window.KIMO_TRACKS=[]}
+try{var _ac=JSON.parse(localStorage.getItem('kimo_audius_cache')||'[]');if(Array.isArray(_ac)){var _known=Object.create(null);window.KIMO_TRACKS.forEach(function(t){_known[t.id]=true});_ac.filter(function(t){return t&&t.source==='audius'&&typeof t.id==='string'&&typeof t.audiusId==='string'&&typeof t.title==='string'}).forEach(function(t){if(!_known[t.id]){_known[t.id]=true;window.KIMO_TRACKS.push(t)}})}}catch(e){}
+function saveTracks(){try{localStorage.setItem('kimo_tracks',JSON.stringify(window.KIMO_TRACKS.filter(function(t){return t.source!=='audius'})))}catch(e){toast('Не удалось сохранить список треков')}}
+function drawTracks(){var box=gid('localTracks'),local=(window.KIMO_TRACKS||[]).filter(function(t){return t.source!=='audius'});box.innerHTML=local.length?'<div class="rch"><span>Мои аудиофайлы · '+local.length+'</span></div>'+local.map(function(t){return '<div class="li" data-local-id="'+esc(t.id)+'"><div class="c" style="background:#2c3a6b">♪</div><div class="lt"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div><button class="ib" data-del="'+esc(t.id)+'" aria-label="Удалить">×</button></div>'}).join(''):'<div class="empty">Медиатека пуста. Нажми +, чтобы импортировать музыку.</div>'}
 drawTracks();
 gid('importTracks').onclick=function(){gid('audioFiles').click()};
 gid('audioFiles').onchange=function(){
@@ -455,38 +480,37 @@ gid('audioFiles').onchange=function(){
  if(!files.length)return;
  // iOS Files may report downloaded audio as application/octet-stream.
  // Do not rely on the MIME filter: validate the extension ourselves.
- var allowed=/\.(mp3|m4a|m4b|aac|wav|aiff?|caf|flac|ogg|opus|amr|3gp)$/i;
+ var allowed=/\\.(mp3|m4a|m4b|aac|wav|aiff?|caf|flac|ogg|opus|amr|3gp)$/i;
  var accepted=files.filter(function(file){return (file.type&&file.type.indexOf('audio/')===0)||allowed.test(file.name||'')});
  var rejected=files.length-accepted.length;
  if(!accepted.length){toast('Не найдены поддерживаемые аудиофайлы');return}
- var saved=0,failed=0;
- Promise.all(accepted.map(function(file){
-  return new Promise(function(resolve){
-   var id='local_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2);
-   var req;
-   try{req=indexedDB.open('kimo_audio',1)}catch(err){failed++;resolve();return}
-   req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};
-   req.onerror=function(){failed++;resolve()};
-   req.onblocked=function(){failed++;resolve()};
-   req.onsuccess=function(){
-    var db=req.result,tx;
-    try{tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(file,id)}
-    catch(err){db.close();failed++;resolve();return}
-    tx.oncomplete=function(){
-     db.close();
-     window.KIMO_TRACKS.push({id:id,title:file.name.replace(/\.[^.]+$/,''),artist:'Локальный файл',name:file.name});
-     saved++;resolve();
-    };
-    tx.onerror=tx.onabort=function(){db.close();failed++;resolve()};
-   };
-  });
- })).then(function(){
-  if(saved) {saveTracks();drawTracks();renderS()}
-  var message=saved+' из '+files.length+' файлов добавлено';
-  if(rejected)message+=' · пропущено: '+rejected;
-  if(failed)message+=' · ошибок: '+failed;
-  toast(message);
- });
+ if(!window.indexedDB){toast('Хранилище аудио недоступно в этом браузере');return}
+ var req;
+ try{req=indexedDB.open('kimo_audio',1)}catch(error){toast('Хранилище аудио недоступно');return}
+ req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};
+ req.onerror=function(){toast('Не удалось открыть хранилище аудио')};
+ req.onblocked=function(){toast('Закрой другие вкладки Kimo, чтобы импортировать музыку')};
+ req.onsuccess=function(){
+  var db=req.result,tx,newTracks=accepted.map(function(file){return {id:'local_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2),title:file.name.replace(/\\.[^.]+$/,''),artist:'Локальный файл',name:file.name}});
+  db.onversionchange=function(){db.close()};
+  try{
+   tx=db.transaction('tracks','readwrite');
+   var store=tx.objectStore('tracks');
+   accepted.forEach(function(file,i){store.put(file,newTracks[i].id)});
+  }catch(error){db.close();toast('Не удалось сохранить аудиофайлы');return}
+  var finished=false;
+  function finish(ok){
+   if(finished)return;finished=true;db.close();
+   if(!ok){toast('Не удалось сохранить аудиофайлы');return}
+   window.KIMO_TRACKS=window.KIMO_TRACKS.concat(newTracks);
+   saveTracks();drawTracks();renderS();
+   var message=accepted.length+' из '+files.length+' файлов добавлено';
+   if(rejected)message+=' · пропущено: '+rejected;
+   toast(message);
+  }
+  tx.oncomplete=function(){finish(true)};
+  tx.onerror=tx.onabort=function(){finish(false)};
+ };
 };
 gid('localTracks').onclick=function(e){var d=e.target.closest('[data-del]');if(d){var id=d.dataset.del;if(window.KIMO_CURRENT_ID===id&&window.KIMO_STOP)window.KIMO_STOP();if(window.kimoRemoveLike)window.kimoRemoveLike(id);window.KIMO_TRACKS=window.KIMO_TRACKS.filter(function(t){return t.id!==id});saveTracks();var req=indexedDB.open('kimo_audio',1);req.onsuccess=function(){var db=req.result,tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').delete(id);tx.oncomplete=function(){db.close()}};drawTracks();renderS();return}var row=e.target.closest('[data-local-id]');if(row)window.KIMO_PLAY_TRACK(row.dataset.localId)};
 /* library */
@@ -497,20 +521,20 @@ var PL='<svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>';
 var ICP='<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>',ICN='<svg viewBox="0 0 24 24"><path d="M14 3l7 7-2 1-3 3 .5 4.5-1.5 1.5-4-4-6 6-1-1 6-6-4-4 1.5-1.5L12 9l3-3z"/></svg>',ICD='<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>';
 var GR=['#9db4ff','#ffb48a','#7cd992','#ffd23f'];
 var LI=[];
-try{var sv=JSON.parse(localStorage.getItem('pl_li')||'null');if(sv&&sv.length)LI=sv.filter(function(x){return !['Любимые треки','Артист А','Артист Б','Артист В','Ночной драйв','Северное сияние','Тихие воды'].includes(x[0])})}catch(e){}
+try{var sv=JSON.parse(localStorage.getItem('pl_li')||'null');if(Array.isArray(sv))LI=sv.filter(function(x){return Array.isArray(x)&&typeof x[0]==='string'&&typeof x[1]==='string'&&typeof x[2]==='string'&&!['Любимые треки','Артист А','Артист Б','Артист В','Ночной драйв','Северное сияние','Тихие воды'].includes(x[0])}).map(function(x){return [x[0],x[1],x[2],/^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(x[3]||'')?x[3]:'#2c3a6b',!!x[4],!!x[5]]})}catch(e){}
 function saveL(){try{localStorage.setItem('pl_li',JSON.stringify(LI))}catch(e){}}
 var sh=gid('sheet'),s2=gid('sh2'),tt;
 function openSh(h){sh.innerHTML='<div class="gr"></div>'+h;sh.classList.add('on');s2.classList.add('on')}
 function closeSh(){sh.classList.remove('on');s2.classList.remove('on')}
 s2.onclick=closeSh;
-function toast(m,u){var t=gid('toast');t.innerHTML='<span>'+m+'</span>'+(u?'<u>Отменить</u>':'');t.classList.add('on');t.onclick=u?function(){u();t.classList.remove('on')}:null;clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},3200)}
+function toast(m,u){var t=gid('toast');t.textContent='';var span=document.createElement('span');span.textContent=String(m);t.appendChild(span);t.onclick=null;if(u){var action=document.createElement('u');action.textContent='Отменить';t.appendChild(action);t.onclick=function(){u();t.classList.remove('on')}}t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},3200)}
 function renderL(anim){
   var q=gid('lq').value.trim().toLowerCase(),c=anim?' a':'',d=0,T={1:'p',2:'a',3:'al'};
   var a=LI.map(function(x,i){return {x:x,i:i}}).filter(function(o){return(!LF||o.x[1]===T[LF])&&(!q||o.x[0].toLowerCase().indexOf(q)>-1)});
   if(LS===1)a.sort(function(p,r){return p.x[0].localeCompare(r.x[0],'ru')});
   if(LS===2){var ord={p:0,al:1,a:2};a.sort(function(p,r){return ord[ord[p.x[1]]!==undefined?p.x[1]:'p']-ord[r.x[1]]||p.i-r.i})}
   a.sort(function(p,r){return(r.x[4]?1:0)-(p.x[4]?1:0)});
-  var h=a.map(function(o){var x=o.x;return '<div class="li'+c+'" style="--d:'+(d++)+'" data-i="'+o.i+'"><div class="c'+(x[1]==='a'?' ar':'')+'" style="background:'+x[3]+'">'+(x[5]?HEART:'')+'</div><div class="lt"><b>'+esc(x[0])+'</b><span>'+(x[4]?PIN:'')+esc(x[2])+'</span></div></div>'}).join('');
+  var h=a.map(function(o){var x=o.x,colour=/^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(x[3]||'')?x[3]:'#2c3a6b';return '<div class="li'+c+'" style="--d:'+(d++)+'" data-i="'+o.i+'"><div class="c'+(x[1]==='a'?' ar':'')+'" style="background:'+colour+'">'+(x[5]?HEART:'')+'</div><div class="lt"><b>'+esc(x[0])+'</b><span>'+(x[4]?PIN:'')+esc(x[2])+'</span></div></div>'}).join('');
   if(!LF&&!q)h+='<div class="li add'+c+'" style="--d:'+(d++)+'" data-add="p"><div class="c">'+PL+'</div><div class="lt"><b>Создать плейлист</b></div></div><div class="li add'+c+'" style="--d:'+(d++)+'" data-add="x"><div class="c ar">'+PL+'</div><div class="lt"><b>Добавить исполнителя</b></div></div>';
   gid('ll').innerHTML=h||'<div class="empty">'+(q?'Ничего не найдено':'Здесь пока пусто')+'</div>';
 }
@@ -519,7 +543,7 @@ gridIcon();
 var SN=['Недавние','По алфавиту','По типу'];
 function openItem(i){var x=LI[i];sh.dataset.i=i;openSh('<h3>'+esc(x[0])+'</h3><div class="sa" data-a="play">'+ICP+'<b>Слушать</b></div><div class="sa'+(x[4]?' on':'')+'" data-a="pin">'+ICN+'<b>'+(x[4]?'Открепить':'Закрепить')+'</b></div>'+(x[5]?'':'<div class="sa red" data-a="del">'+ICD+'<b>Убрать из медиатеки</b></div>'))}
 function openNew(){openSh('<h3>Новый плейлист</h3><input id="npn" placeholder="Название" maxlength="40" autocomplete="off"><button class="go" id="npg">Создать</button>');setTimeout(function(){var n=gid('npn');if(n)n.focus()},380)}
-function mkPl(){var n=gid('npn').value.trim()||'Мой плейлист '+(++NP);LI.unshift([n,'p','Плейлист • Ты',GR[LI.length%4]]);saveL();closeSh();renderL(true);toast('Плейлист «'+esc(n)+'» создан')}
+function mkPl(){var n=gid('npn').value.trim()||'Мой плейлист '+(++NP);LI.unshift([n,'p','Плейлист • Ты',GR[LI.length%4]]);saveL();closeSh();renderL(true);toast('Плейлист «'+n+'» создан')}
 /* original sh.onclick moved to settings block */
 sh.onkeydown=function(e){if(e.key==='Enter'&&e.target.id==='npn')mkPl()};
 gid('ll').onclick=function(e){var r=e.target.closest('.li');if(!r)return;if(r.dataset.i!==undefined)openItem(+r.dataset.i);else if(r.dataset.add==='p')openNew();else toast('Скоро будет доступно')};
@@ -533,18 +557,24 @@ gid('lpl').onclick=openNew;
 
 /* Real audio playback */
 (function(){
-var a=gid('audio'),playing=false,currentId=null,objectUrl=null,shuffle=false,playRequest=0;
+var a=gid('audio'),playing=false,currentId=null,objectUrl=null,shuffle=false,playRequest=0,loading=false,sleepTimer=null;
+function audioDiagnostic(prefix,error){var e=a.error,code=e?e.code:0,media=code===1?'MEDIA_ERR_ABORTED':code===2?'MEDIA_ERR_NETWORK':code===3?'MEDIA_ERR_DECODE':code===4?'MEDIA_ERR_SRC_NOT_SUPPORTED':'нет';var name=error&&error.name?error.name:'нет';var msg=error&&error.message?String(error.message).slice(0,90):'';return prefix+' · '+name+' · media='+media+'('+code+') · ready='+a.readyState+' · network='+a.networkState+(msg?' · '+msg:'')};
+a.addEventListener('error',function(){var e=a.error;if(e)console.error('Kimo audio element error:',e.code,e.message,'readyState='+a.readyState,'networkState='+a.networkState,'src='+String(a.currentSrc||'').split('?')[0]);if(currentId&&String(currentId).indexOf('audius_')===0)toast(audioDiagnostic('Audius stream error'))});
 function fmt(v){v=Math.max(0,Math.floor(v||0));return Math.floor(v/60)+':'+('0'+v%60).slice(-2)}
+function setSleepTimer(minutes){if(sleepTimer){clearTimeout(sleepTimer);sleepTimer=null}if(!minutes){toast('Таймер сна отключён');return}sleepTimer=setTimeout(function(){sleepTimer=null;a.pause();toast('Таймер сна завершён')},minutes*60*1000);toast('Таймер сна установлен на '+minutes+' мин')}
+gid('sleepTimer').onclick=function(){openSh('<h3>Таймер сна</h3><div class="sa" data-sleep="15"><b>Через 15 минут</b></div><div class="sa" data-sleep="30"><b>Через 30 минут</b></div><div class="sa" data-sleep="45"><b>Через 45 минут</b></div><div class="sa" data-sleep="60"><b>Через 60 минут</b></div><div class="sa" data-sleep="0"><b>Отключить таймер</b></div>');[].forEach.call(sh.querySelectorAll('[data-sleep]'),function(btn){btn.onclick=function(){setSleepTimer(Number(btn.dataset.sleep));closeSh()}})};
+function shareCurrentTrack(withLyrics){var t=track();if(!t){toast('Сначала выбери трек');return}var text=t.title+' — '+t.artist;if(withLyrics&&typeof t.lyrics==='string'&&t.lyrics.trim())text+='\n\n'+t.lyrics.trim();var data={title:t.title,text:text,url:location.href};if(navigator.share){try{var shareResult=navigator.share(data);if(shareResult&&shareResult.catch)shareResult.catch(function(error){if(error&&error.name!=='AbortError')toast('Не удалось открыть меню отправки')})}catch(error){toast('Не удалось открыть меню отправки')}return}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text+'\n'+location.href).then(function(){toast('Ссылка скопирована')}).catch(function(){toast('Не удалось скопировать ссылку')});return}toast('Отправка недоступна в этом браузере')}
+gid('shareTrack').onclick=function(){shareCurrentTrack(false)};gid('shareLyrics').onclick=function(){shareCurrentTrack(true)};gid('tr').onclick=function(){toast('Перевод текста пока не подключён')};[].forEach.call(document.querySelectorAll('button[aria-label="Устройства"]'),function(btn){btn.addEventListener('click',function(){toast('Выбор устройства пока не поддерживается в Kimo')})});
 function track(){return (window.KIMO_TRACKS||[]).find(function(t){return t.id===currentId})}
 function controls(){var path=playing?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M7 4l13 8-13 8z"/>';['pb','pb2'].forEach(function(id){gid(id).querySelector('svg').innerHTML=path});gid('ppi').innerHTML=path;gid('player').classList.toggle('paused',!playing)}
-function labels(){var t=track(),title=t?t.title:'Выбери трек',artist=t?t.artist:'Локальная медиатека';['playerTitle','miniTitle','cur','playerHeading'].forEach(function(id){if(gid(id))gid(id).textContent=title});['playerArtist','miniArtist'].forEach(function(id){if(gid(id))gid(id).textContent=artist});if(gid('pv'))gid('pv').textContent=t&&typeof t.lyrics==='string'&&t.lyrics.trim()?t.lyrics.trim().split(/\r?\n/).filter(Boolean).slice(0,2).join(' · '):'Текст песни недоступен';if(gid('lyr')&&gid('lyr').classList.contains('open'))renderLyrics();if(window.kimoTrackChanged)window.kimoTrackChanged(t)}
+function labels(){var t=track(),title=t?t.title:'Выбери трек',artist=t?t.artist:'Локальная медиатека',art=t&&typeof t.artwork==='string'?t.artwork:'';var big=gid('player').querySelector('.art2'),mini=gid('miniArt')||document.querySelector('.mini .art');[big,mini].forEach(function(el){if(!el)return;if(art){el.classList.add('has-art');el.style.backgroundImage='url('+JSON.stringify(art)+')'}else{el.classList.remove('has-art');el.style.backgroundImage=''}});['playerTitle','miniTitle','cur','playerHeading'].forEach(function(id){if(gid(id))gid(id).textContent=title});['playerArtist','miniArtist'].forEach(function(id){if(gid(id))gid(id).textContent=artist});if(gid('pv'))gid('pv').textContent=t&&typeof t.lyrics==='string'&&t.lyrics.trim()?t.lyrics.trim().split(/\r?\n/).filter(Boolean).slice(0,2).join(' · '):'Текст песни недоступен';if(gid('lyr')&&gid('lyr').classList.contains('open'))renderLyrics();if(window.kimoTrackChanged)window.kimoTrackChanged(t)}
 var seekPreviewTime=null;
 function progress(){var d=a.duration||0,t=seekPreviewTime===null?(a.currentTime||0):seekPreviewTime,p=d?100*t/d:0;['fill','fill2','pg'].forEach(function(id){gid(id).style.width=p+'%'});['t1','t1b'].forEach(function(id){gid(id).textContent=fmt(t)});['t2','t2b'].forEach(function(id){gid(id).textContent='-'+fmt(Math.max(0,d-t))})}
 function renderLyrics(){var t=track(),box=gid('lw'),sub=gid('lyricSubtitle');if(!box)return;if(sub)sub.textContent=t?t.title+' · '+t.artist:'Выбери трек';var raw=t&&typeof t.lyrics==='string'?t.lyrics:'';if(!raw.trim()){box.innerHTML='<div class="lyr-empty"><div><strong>Текст песни недоступен</strong>Для этого трека текст пока не добавлен.</div></div>';}else{box.innerHTML=raw.replace(/\r/g,'').split('\n').map(function(line){return '<p class="l">'+(line.trim()?esc(line):'&nbsp;')+'</p>'}).join('')}box.scrollTop=0}
 gid('showLyrics').onclick=function(){renderLyrics();gid('lyr').classList.add('open')};gid('lclose').onclick=function(){gid('lyr').classList.remove('open')};
-function openDB(cb){var r=indexedDB.open('kimo_audio',1);r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('tracks'))r.result.createObjectStore('tracks')};r.onsuccess=function(){cb(r.result)};r.onerror=function(){toast('Хранилище аудио недоступно')}}
-function saveBlob(id,blob,cb){openDB(function(db){var tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(blob,id);tx.oncomplete=function(){db.close();cb(true)};tx.onerror=function(){db.close();cb(false)}})}
-function getBlob(id,cb){openDB(function(db){var r=db.transaction('tracks').objectStore('tracks').get(id);r.onsuccess=function(){var b=r.result;db.close();cb(b)};r.onerror=function(){db.close();cb(null)}})}
+function openDB(cb){var r,settled=false;function fail(message){if(settled)return;settled=true;toast(message||'Хранилище аудио недоступно');cb(null)}try{r=indexedDB.open('kimo_audio',1)}catch(error){fail('Хранилище аудио недоступно');return}r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('tracks'))r.result.createObjectStore('tracks')};r.onsuccess=function(){var db=r.result;if(settled){db.close();return}settled=true;cb(db)};r.onerror=function(){fail('Хранилище аудио недоступно')};r.onblocked=function(){fail('Закрой другие вкладки Kimo и повтори попытку')}}
+function saveBlob(id,blob,cb){openDB(function(db){if(!db){if(cb)cb(false);return}var tx;try{tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(blob,id)}catch(error){db.close();if(cb)cb(false);return}tx.oncomplete=function(){db.close();if(cb)cb(true)};tx.onerror=tx.onabort=function(){db.close();if(cb)cb(false)}})}
+function getBlob(id,cb){openDB(function(db){if(!db){cb(null);return}var tx,request,finished=false;function done(blob){if(finished)return;finished=true;try{db.close()}catch(ignore){}cb(blob||null)}try{tx=db.transaction('tracks','readonly');request=tx.objectStore('tracks').get(id)}catch(error){done(null);return}request.onsuccess=function(){done(request.result)};request.onerror=function(){done(null)};tx.onabort=function(){done(null)}})}
 var repeatMode=0;try{repeatMode=Math.max(0,Math.min(2,parseInt(localStorage.getItem('kimo_repeat_mode')||'0',10)||0))}catch(e){}
 function repeatLabel(){return ['Выключен','Повтор всего','Повтор трека'][repeatMode]}
 function repeatShortLabel(){return ['Выкл.','Все','Трек'][repeatMode]}
@@ -553,7 +583,7 @@ function syncRepeatControls(animate){[].forEach.call(document.querySelectorAll('
 function cycleRepeat(){repeatMode=(repeatMode+1)%3;try{localStorage.setItem('kimo_repeat_mode',String(repeatMode))}catch(e){}syncRepeatControls(true);toast('Повтор: '+repeatLabel())}
 
 var queueIds=[];
-try{queueIds=JSON.parse(localStorage.getItem('kimo_queue')||'[]')}catch(e){queueIds=[]}
+try{var savedQueue=JSON.parse(localStorage.getItem('kimo_queue')||'[]');queueIds=Array.isArray(savedQueue)?savedQueue.filter(function(id){return typeof id==='string'}):[]}catch(e){queueIds=[]}
 function saveQueue(){queueIds=queueIds.filter(function(id,i,a){return a.indexOf(id)===i&&(window.KIMO_TRACKS||[]).some(function(t){return t.id===id})});try{localStorage.setItem('kimo_queue',JSON.stringify(queueIds))}catch(e){}}
 function addQueue(id){if(!(window.KIMO_TRACKS||[]).some(function(t){return t.id===id}))return;if(id===currentId||queueIds.indexOf(id)>=0){toast('Трек уже в очереди');return}queueIds.push(id);saveQueue();toast('Добавлено в очередь');}
 function renderQueue(){
@@ -578,14 +608,17 @@ function renderQueue(){
  });
 }
 function playNext(){while(queueIds.length){var id=queueIds.shift();saveQueue();if((window.KIMO_TRACKS||[]).some(function(t){return t.id===id})){play(id,true);return}}move(1,true)}
-function play(id,fromQueue){var request=++playRequest;if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(request!==playRequest)return;if(!blob){toast('Аудиофайл не найден');if(fromQueue)playNext();return}if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id})){if(fromQueue)playNext();return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
+var streamController=null;
+function activateSource(id,request,blob){if(request!==playRequest)return;if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id}))return;loading=false;a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')}
+function activateStream(id,request,url){if(request!==playRequest)return;if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id}))return;loading=false;a.pause();if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}currentId=id;window.KIMO_CURRENT_ID=id;/* Web Audio analyser routes media through MediaElementAudioSourceNode. Cross-origin audio without CORS mode is muted by the browser once connected to Web Audio. Set CORS mode BEFORE assigning src. */a.crossOrigin='anonymous';a.preload='auto';a.src=url;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(error){console.error('Kimo audio play rejected:',error);toast(audioDiagnostic('Audius play rejected',error))});gid('player').classList.add('open');document.body.classList.add('pushed')}
+function play(id,fromQueue){var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;var request=++playRequest;if(streamController){streamController.abort();streamController=null}if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();a.pause();currentId=id;window.KIMO_CURRENT_ID=id;labels();gid('player').classList.add('open');document.body.classList.add('pushed');if(t.source==='audius'){loading=false;var key=audiusKey();if(!key){if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}a.removeAttribute('src');a.load();toast('Сначала подключи Audius API Key');return}/* Start the media request directly inside the user's tap handler. Do not await metadata first: iOS Safari can reject play() after an async gap. */var streamUrl='https://api.audius.co/v1/tracks/'+encodeURIComponent(t.audiusId)+'/stream?api_key='+encodeURIComponent(key);activateStream(id,request,streamUrl);var controller=new AbortController();streamController=controller;var endpoint='https://api.audius.co/v1/tracks/'+encodeURIComponent(t.audiusId);fetch(endpoint,{headers:{'x-api-key':key,'Accept':'application/json'},signal:controller.signal,cache:'no-store'}).then(function(response){if(!response.ok)throw new Error('Audius metadata: HTTP '+response.status);return response.json()}).then(function(json){if(request!==playRequest)return;var data=json&&json.data;if(data&&data.artwork){var freshArt=data.artwork['480x480']||data.artwork._480x480||data.artwork['150x150']||data.artwork._150x150;if(freshArt){t.artwork=freshArt;rememberAudiusTracks([t]);labels()}}}).catch(function(error){if(error.name!=='AbortError')console.warn('Kimo Audius artwork metadata unavailable:',error)}).then(function(){if(request===playRequest&&streamController===controller)streamController=null});return}if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}a.removeAttribute('src');a.load();loading=true;getBlob(id,function(blob){if(request!==playRequest)return;loading=false;if(!blob){currentId=null;window.KIMO_CURRENT_ID=null;labels();progress();controls();toast('Аудиофайл не найден');if(fromQueue)playNext();return}activateSource(id,request,blob)})}
 window.KIMO_PLAY_TRACK=play;
-window.KIMO_STOP=function(){playRequest++;a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
-function toggle(){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
+window.KIMO_STOP=function(){playRequest++;loading=false;if(streamController){streamController.abort();streamController=null}a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
+function toggle(){if(loading){toast('Подготавливаем аудиофайл…');return}if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){if(currentId){play(currentId);return}var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(error){console.error('Kimo manual play rejected:',error);toast(audioDiagnostic('Play rejected',error))});else a.pause()}
 function move(dir,automatic){var list=window.KIMO_TRACKS||[];if(!list.length)return;var i=list.findIndex(function(t){return t.id===currentId});if(i<0){play(list[0].id);return}if(shuffle&&list.length>1){var n=i;while(n===i)n=Math.floor(Math.random()*list.length);i=n}else{var next=i+dir;if(automatic&&repeatMode===0&&dir>0&&next>=list.length)return;i=(next+list.length)%list.length}if(list[i])play(list[i].id)}
 function nextTrack(){if(queueIds.length)playNext();else move(1,false)}
 gid('pp').onclick=toggle;gid('pb').onclick=toggle;gid('pb2').onclick=toggle;gid('prv').onclick=function(){if(a.currentTime>3)a.currentTime=0;else move(-1)};
-gid('shuf').onclick=function(){shuffle=!shuffle;this.classList.toggle('g',shuffle)};
+gid('shuf').onclick=function(){shuffle=!shuffle;this.classList.toggle('g',shuffle);this.setAttribute('aria-pressed',shuffle?'true':'false')};
 gid('volume').oninput=function(){a.volume=Number(this.value)};a.volume=Number(gid('volume').value);
 gid('queueBtn').onclick=function(){var self=this;self.classList.remove('queue-pulse');void self.offsetWidth;self.classList.add('queue-pulse');renderQueue()};
 gid('repeatBtn').onclick=cycleRepeat;syncRepeatControls(false);
@@ -654,11 +687,20 @@ var sx=null;dr.addEventListener('touchstart',function(e){sx=e.touches[0].clientX
 dr.addEventListener('touchend',function(e){if(sx!==null&&sx-e.changedTouches[0].clientX>60)dOpen(false);sx=null});
 
 /* ===== LIKES ===== */
-var LIKES = [];
-try { LIKES = JSON.parse(localStorage.getItem('pl_likes') || '[]').filter(function(x){return x.id!=='stoboy'&&x.title!=='С тобой'&&x.title!=='Текст песни'}); } catch(e) {}
+var LIKES = [], likesSortMode = 0;
+try { LIKES = JSON.parse(localStorage.getItem('pl_likes') || '[]').filter(function(x){return x&&typeof x.id==='string'&&typeof x.title==='string'&&x.id!=='stoboy'&&x.title!=='С тобой'&&x.title!=='Текст песни'}); } catch(e) {}
 function saveLikes() { try { localStorage.setItem('pl_likes', JSON.stringify(LIKES)); } catch(e) {} }
 
 var CUR_TRACK = { id: '', title: 'Выбери трек', artist: 'Локальная медиатека', color: '#2c3a6b' };
+window.kimoTrackChanged = function(track) {
+  CUR_TRACK = track && track.id ? {
+    id: String(track.id),
+    title: String(track.title || 'Без названия'),
+    artist: String(track.artist || 'Неизвестный исполнитель'),
+    color: /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(track.color || '') ? track.color : '#2c3a6b'
+  } : { id: '', title: 'Выбери трек', artist: 'Локальная медиатека', color: '#2c3a6b' };
+  updateLikeBtn(false);
+};
 
 function isLiked(id) {
   return LIKES.some(function(x) { return x.id === id; });
@@ -756,19 +798,31 @@ function renderLikes(anim) {
   }
   if (empty) empty.style.display = 'none';
   var c = anim ? ' a' : '';
-  var h = LIKES.map(function(t, i) {
-    return '<div class="li' + c + '" style="--d:' + i + '" data-like-id="' + t.id + '">' +
-      '<div class="c" style="background:' + (t.color || '#2c3a6b') + '">' +
+  var sortedLikes = LIKES.slice();
+  if (likesSortMode === 1) sortedLikes.sort(function(a, b) { return a.title.localeCompare(b.title, 'ru'); });
+  var h = sortedLikes.map(function(t, i) {
+    var safeColor = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(t.color || '') ? t.color : '#2c3a6b';
+    var safeId = esc(t.id);
+    return '<div class="li' + c + '" style="--d:' + i + '" data-like-id="' + safeId + '">' +
+      '<div class="c" style="background:' + safeColor + '">' +
         '<svg viewBox="0 0 24 24" style="width:40%;height:40%;fill:#fff;stroke:none"><path d="' + HEART_PATH + '"/></svg>' +
       '</div>' +
       '<div class="lt"><b>' + (typeof esc === 'function' ? esc(t.title) : t.title) + '</b><span>' + (typeof esc === 'function' ? esc(t.artist) : t.artist) + '</span></div>' +
-      '<button class="ib" data-unlike="' + t.id + '" aria-label="Убрать лайк" style="flex:none">' +
+      '<button class="ib" data-unlike="' + safeId + '" aria-label="Убрать лайк" style="flex:none">' +
         '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ff5c7a" stroke="#ff5c7a"><path d="' + HEART_PATH + '"/></svg>' +
       '</button>' +
     '</div>';
   }).join('');
   list.innerHTML = h;
 }
+
+var likesSortButton = document.getElementById('likesSort');
+var likesSortLabel = document.getElementById('likesSortL');
+if (likesSortButton) likesSortButton.addEventListener('click', function() {
+  likesSortMode = likesSortMode === 0 ? 1 : 0;
+  if (likesSortLabel) likesSortLabel.textContent = likesSortMode === 0 ? 'Недавние' : 'По алфавиту';
+  renderLikes(false);
+});
 
 // Bind clicks once DOM is ready (script is at end of body, so OK)
 (function bindLikes() {
@@ -839,8 +893,12 @@ var ST = {
 };
 try {
   var _st = JSON.parse(localStorage.getItem('pl_st') || 'null');
-  if (_st) Object.assign(ST, _st);
+  if (_st && typeof _st === 'object' && !Array.isArray(_st)) Object.keys(ST).forEach(function(key) { if (Object.prototype.hasOwnProperty.call(_st, key)) ST[key] = _st[key]; });
 } catch(e) {}
+['private','explicit','openPl','gapless','crossfade','normalize','push','email','newRel','mobileDl','wifiOnly','ads'].forEach(function(key) { ST[key] = ST[key] === true; });
+ST.traf = [0,1,2].indexOf(Number(ST.traf)) >= 0 ? Number(ST.traf) : 0;
+ST.quality = [0,1,2].indexOf(Number(ST.quality)) >= 0 ? Number(ST.quality) : 2;
+ST.devices = Math.max(1, Math.floor(Number(ST.devices) || 1));
 
 function saveST() {
   try { localStorage.setItem('pl_st', JSON.stringify(ST)); } catch(e) {}
@@ -1095,11 +1153,12 @@ sdetBody.addEventListener('click', function(e) {
   var act = e.target.closest('[data-act]');
   if (act) {
     var a = act.dataset.act;
-    if (a === 'logout') { closeSdet(); toast('Вы вышли из аккаунта'); return; }
-    if (a === 'clearhist') { toast('История прослушивания очищена'); return; }
+    if (a === 'logout') { closeSdet(); toast('Аккаунт не подключён — выход недоступен'); return; }
+    if (a === 'clearhist') { toast('История прослушивания пока не ведётся'); return; }
     if (a === 'clearrc') { RC = []; svRC(); toast('Недавние поиски очищены'); return; }
-    if (a === 'disconnect') { ST.devices = 1; saveST(); updSettingsUI(); toast('Все устройства отключены'); return; }
+    if (a === 'disconnect') { toast('Другие устройства не подключены в локальном режиме'); return; }
     if (a === 'import') { document.getElementById('audioFiles').click(); return; }
+    if (a === 'plus') { toast('Подписка пока не подключена'); return; }
     if (a === 'rename' || a === 'email' || a === 'sub' || a === 'pass' || a === '2fa' ||
         a === 'aboutads' || a === 'privacy' || a === 'terms' || a === 'licenses' || a === 'feedback') {
       toast('Скоро будет доступно');
@@ -1156,7 +1215,7 @@ document.getElementById('setBack').onclick = function() {
 };
 
 var cu = document.getElementById('cust'), R = document.documentElement, S = {c:'#ff5c7a',b:'#0f0f11',r:0,a:1,d:40}, BGU = null;
-try { var q = JSON.parse(localStorage.getItem('pl_cust') || 'null'); if (q) S = q; } catch(e) {}
+try { var q = JSON.parse(localStorage.getItem('pl_cust') || 'null'); if (q && typeof q === 'object' && !Array.isArray(q)) { if (/^#[0-9a-f]{6}$/i.test(q.c || '')) S.c = q.c; if (/^#[0-9a-f]{6}$/i.test(q.b || '')) S.b = q.b; S.r = Number(q.r) === 1 ? 1 : 0; S.a = q.a === 0 ? 0 : 1; S.d = isFinite(Number(q.d)) ? Math.max(0, Math.min(85, Number(q.d))) : 40; } } catch(e) {}
 function mark(box, fn) { [].forEach.call(box.children, function(x) { x.classList.toggle('on', fn(x)); }); }
 function ap() {
   R.style.setProperty('--green', S.c);
@@ -1183,9 +1242,9 @@ document.getElementById('tgA').onclick = function() { S.a = S.a ? 0 : 1; ap(); }
 
 /* фон: фото / видео (файл хранится в IndexedDB) */
 var bgm=document.getElementById('bgm'),bgT=document.getElementById('bgT'),bgS=document.getElementById('bgS'),bgDel=document.getElementById('bgDel'),bgD=document.getElementById('bgD'),bgIco=bgT.innerHTML;
-function idb(cb){try{var r=indexedDB.open('pl_bg',1);r.onupgradeneeded=function(){r.result.createObjectStore('f')};r.onsuccess=function(){cb(r.result)};r.onerror=function(){cb(null)}}catch(e){cb(null)}}
-function idbGet(cb){idb(function(d){if(!d)return cb(null);try{var q=d.transaction('f').objectStore('f').get('bg');q.onsuccess=function(){cb(q.result||null)};q.onerror=function(){cb(null)}}catch(e){cb(null)}})}
-function idbSet(b,cb){idb(function(d){if(!d)return cb&&cb(false);try{var t=d.transaction('f','readwrite'),o=t.objectStore('f');if(b)o.put(b,'bg');else o.delete('bg');t.oncomplete=function(){cb&&cb(true)};t.onerror=function(){cb&&cb(false)}}catch(e){cb&&cb(false)}})}
+function idb(cb){var r,settled=false;function fail(){if(settled)return;settled=true;cb(null)}try{r=indexedDB.open('pl_bg',1)}catch(e){fail();return}r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('f'))r.result.createObjectStore('f')};r.onsuccess=function(){var db=r.result;if(settled){db.close();return}settled=true;cb(db)};r.onerror=fail;r.onblocked=fail}
+function idbGet(cb){idb(function(d){if(!d)return cb(null);var done=false;function finish(value){if(done)return;done=true;d.close();cb(value||null)}try{var tx=d.transaction('f','readonly'),q=tx.objectStore('f').get('bg');q.onsuccess=function(){finish(q.result)};q.onerror=function(){finish(null)};tx.onabort=function(){finish(null)}}catch(e){finish(null)}})}
+function idbSet(b,cb){idb(function(d){if(!d){if(cb)cb(false);return}var done=false;function finish(ok){if(done)return;done=true;d.close();if(cb)cb(ok)}try{var t=d.transaction('f','readwrite'),o=t.objectStore('f');if(b)o.put(b,'bg');else o.delete('bg');t.oncomplete=function(){finish(true)};t.onerror=t.onabort=function(){finish(false)}}catch(e){finish(false)}})}
 function mk(file,bg){var v=file.type.indexOf('video')===0,e=document.createElement(v?'video':'img');
  if(v){e.muted=true;e.defaultMuted=true;e.loop=bg;e.playsInline=true;e.setAttribute('muted','');e.setAttribute('playsinline','');e.setAttribute('webkit-playsinline','');e.preload=bg?'auto':'metadata';if(bg){e.autoplay=true;e.disablePictureInPicture=true}}
  else e.alt='';
