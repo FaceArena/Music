@@ -117,6 +117,18 @@ body.pushed #home,body.pushed #lib,body.pushed #search,body.pushed #stub{transfo
 .a{animation:rin .55s var(--sp) both;animation-delay:calc(var(--d)*35ms)}@keyframes rin{from{opacity:0;transform:translateY(10px)}}
 mark{background:none;color:var(--green)}
 .empty{padding:30px 20px;color:var(--mute);font-size:15px}
+.aud-config{margin:8px 16px 12px;padding:12px;border-radius:16px;background:var(--sf);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aud-config-copy{flex:1 0 100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.aud-config-copy b{font-size:14px}.aud-config-copy span{font-size:12px;color:var(--mute);text-align:right}
+.aud-config input{flex:1;min-width:0;height:38px;border:1px solid var(--ln);border-radius:11px;background:#0002;color:var(--tx);padding:0 10px;font:inherit;font-size:13px;outline:0}
+.aud-config button{height:38px;border:0;border-radius:11px;padding:0 12px;background:var(--tx);color:var(--bg);font:600 12px Onest,sans-serif}
+.aud-config button[hidden]{display:none}
+.aud-section{padding:15px 20px 5px;font-size:13px;color:var(--mute);font-weight:600}
+.rs.aud-row{cursor:pointer}.rs.aud-row:active{background:var(--sf)}
+.aud-cover{width:50px;height:50px;object-fit:cover;border-radius:11px;flex:none;background:var(--sf2)}
+.aud-play{font-size:11px;color:var(--green);font-weight:600;flex:none}
+.aud-error{padding:12px 20px;color:var(--mute);font-size:13px}
+
 #stubt{margin:120px 28px;font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
 .lqw{display:none;padding:12px 16px 0}.lqw.on{display:block;animation:pin .3s}
 .lqw input{width:100%;height:42px;border:0;border-radius:14px;background:var(--sf2);color:var(--tx);font:inherit;font-size:16px;padding:0 14px;outline:0}
@@ -234,8 +246,10 @@ body.noanim *{animation:none!important;transition:none!important}
 <div id="search" class="page">
   <div class="sbar"><div class="sin"><input id="q" value="" autocomplete="off" spellcheck="false" placeholder="Исполнители, треки" aria-label="Поиск"><button id="qx" aria-label="Очистить"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><button class="cancel" id="cancel">Отмена</button></div>
   <div class="top" id="schips" style="display:none"><button class="chip on" data-f="0">Все</button><button class="chip" data-f="1">Треки</button><button class="chip" data-f="2">Исполнители</button></div>
+  <div class="aud-config" id="audConfig"><div class="aud-config-copy"><b>Audius</b><span id="audStatus">Подключи API Key для поиска музыки</span></div><input id="audKeyInput" type="password" autocomplete="off" placeholder="Audius API Key" aria-label="Audius API Key"><button id="audKeySave" type="button">Сохранить</button><button id="audKeyClear" type="button" hidden>×</button></div>
   <div id="sug"></div>
   <div id="res"></div>
+  <div id="audiusResults"></div>
 </div>
 <div id="lib" class="page">
   <div class="lh2"><div class="av">K</div><h1>Медиатека</h1><button class="ib" id="importTracks" aria-label="Импорт аудио"><svg viewBox="0 0 24 24"><path d="M12 4v11M8 11l4 4 4-4M4 20h16"/></svg></button><button class="ib" id="lsb" aria-label="Поиск"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button><button class="ib" id="lpl" aria-label="Создать плейлист"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></button></div>
@@ -424,20 +438,20 @@ function showPage(i){
 }
 
 
-var SF=0,RC=[];
+var SF=0,RC=[],audiusTimer=null,audiusController=null,audiusHits=[];
 try{RC=JSON.parse(localStorage.getItem('pl_rc')||'[]')}catch(e){}
 function esc(t){return String(t).replace(/[<>&"]/g,function(c){return '&#'+c.charCodeAt(0)+';'})}
 function svRC(){try{localStorage.setItem('pl_rc',JSON.stringify(RC))}catch(e){}}
-function renderS(){
- var q=gid('q').value.trim().toLowerCase();
- gid('schips').style.display=q?'flex':'none';
- gid('qx').style.visibility=gid('q').value?'visible':'hidden';
- var list=(window.KIMO_TRACKS||[]).filter(function(t){return (!q||(t.title+' '+t.artist).toLowerCase().includes(q))&&(!SF||SF===1)});
- gid('sug').innerHTML='';
- gid('res').innerHTML=list.length?list.map(function(t){return '<div class="rs" data-track-id="'+esc(t.id)+'"><div class="av2"></div><div class="rt"><b>'+esc(t.title)+'</b><span>Трек • '+esc(t.artist)+'</span></div></div>'}).join(''):'<div class="empty">'+(q?'В локальной медиатеке ничего не найдено.':'Импортируй аудиофайлы, чтобы искать их здесь.')+'</div>';
-}
+function audiusKey(){try{return localStorage.getItem('kimo_audius_key')||''}catch(e){return ''}}
+function setAudiusStatus(){var key=audiusKey(),s=gid('audStatus'),i=gid('audKeyInput'),b=gid('audKeyClear');if(s)s.textContent=key?'API Key сохранён на этом устройстве':'Подключи API Key для поиска музыки';if(i)i.placeholder=key?'Ключ сохранён · можно заменить':'Audius API Key';if(b)b.hidden=!key}
+function rememberAudiusTracks(items){var cache=[];try{cache=JSON.parse(localStorage.getItem('kimo_audius_cache')||'[]')}catch(e){}items.forEach(function(t){var i=cache.findIndex(function(x){return x.id===t.id});if(i>=0)cache[i]=t;else cache.unshift(t)});cache=cache.slice(0,100);try{localStorage.setItem('kimo_audius_cache',JSON.stringify(cache))}catch(e){}var local=(window.KIMO_TRACKS||[]).filter(function(t){return t.source!=='audius'});window.KIMO_TRACKS=local.concat(cache.filter(function(t){return !local.some(function(x){return x.id===t.id})}))}
+function renderAudius(items){var box=gid('audiusResults');if(!box)return;if(!items.length){box.innerHTML='';return}box.innerHTML='<div class="aud-section">МУЗЫКА ИЗ AUDIUS</div>'+items.map(function(t){return '<div class="rs aud-row" data-audius-id="'+esc(t.id)+'"><img class="aud-cover" src="'+esc(t.artwork||'')+'" alt="" loading="lazy"><div class="rt"><b>'+esc(t.title)+'</b><span>Трек • '+esc(t.artist)+'</span></div><span class="aud-play">▶</span></div>'}).join('')}
+function searchAudius(query){clearTimeout(audiusTimer);if(audiusController){audiusController.abort();audiusController=null}var box=gid('audiusResults'),key=audiusKey();if(!query||query.length<2){if(box)box.innerHTML='';return}if(!key){if(box)box.innerHTML='<div class="aud-error">Введи API Key выше, чтобы искать в каталоге Audius.</div>';return}audiusTimer=setTimeout(function(){var controller=new AbortController();audiusController=controller;if(box)box.innerHTML='<div class="aud-error">Ищем в Audius…</div>';fetch('https://api.audius.co/v1/tracks/search?query='+encodeURIComponent(query)+'&limit=15',{headers:{'x-api-key':key},signal:controller.signal}).then(function(response){if(!response.ok)throw new Error('HTTP '+response.status);return response.json()}).then(function(json){if(controller.signal.aborted||gid('q').value.trim()!==query)return;var rows=Array.isArray(json.data)?json.data:[];audiusHits=rows.filter(function(t){return t&&t.id&&t.is_streamable!==false&&!t.is_stream_gated}).map(function(t){var id='audius_'+String(t.id),user=t.user||{};return {id:id,source:'audius',audiusId:String(t.id),title:t.title||'Без названия',artist:user.name||t.artist_name||'Неизвестный исполнитель',artwork:(t.artwork&&(t.artwork['480x480']||t.artwork._480x480||t.artwork['150x150']||t.artwork._150x150))||'',duration:Number(t.duration)||0,streamable:t.is_streamable!==false}});rememberAudiusTracks(audiusHits);renderAudius(audiusHits)}).catch(function(error){if(error.name==='AbortError')return;if(box)box.innerHTML='<div class="aud-error">Не удалось загрузить Audius. Проверь API Key и попробуй ещё раз.</div>'})},320)}
+function renderS(){var raw=gid('q').value.trim(),q=raw.toLowerCase();gid('schips').style.display=q?'flex':'none';gid('qx').style.visibility=raw?'visible':'hidden';var list=(window.KIMO_TRACKS||[]).filter(function(t){return t.source!=='audius'&&(!q||(t.title+' '+t.artist).toLowerCase().includes(q))&&(!SF||SF===1)});gid('sug').innerHTML='';gid('res').innerHTML=list.length?list.map(function(t){return '<div class="rs" data-track-id="'+esc(t.id)+'"><div class="av2"></div><div class="rt"><b>'+esc(t.title)+'</b><span>Трек • '+esc(t.artist)+'</span></div></div>'}).join(''):(q?'<div class="empty">В локальной медиатеке ничего не найдено.</div>':'<div class="empty">Импортируй аудиофайлы или найди музыку в Audius.</div>');searchAudius(raw)}
+gid('audKeySave').onclick=function(){var input=gid('audKeyInput'),key=(input.value||'').trim();if(!key){toast('Вставь Audius API Key');return}try{localStorage.setItem('kimo_audius_key',key)}catch(e){toast('Не удалось сохранить ключ');return}input.value='';setAudiusStatus();toast('Audius подключён');renderS()};
+gid('audKeyClear').onclick=function(){try{localStorage.removeItem('kimo_audius_key')}catch(e){}setAudiusStatus();audiusHits=[];gid('audiusResults').innerHTML='';toast('API Key удалён')};setAudiusStatus();
 gid('schips').onclick=function(e){var b=e.target.closest('.chip');if(!b)return;SF=+b.dataset.f;[].forEach.call(this.children,function(x){x.classList.toggle('on',+x.dataset.f===SF)});renderS()};
-gid('res').onclick=function(e){var r=e.target.closest('[data-track-id]');if(r&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(r.dataset.trackId)};
+gid('res').onclick=function(e){var r=e.target.closest('[data-track-id]');if(r&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(r.dataset.trackId)};gid('audiusResults').onclick=function(e){var r=e.target.closest('[data-audius-id]');if(!r)return;var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===r.dataset.audiusId});if(t&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(t.id)};
 gid('q').oninput=renderS;
 gid('q').onkeydown=function(e){if(e.key==='Enter'){RC.unshift(this.value.trim());RC=RC.filter(Boolean).slice(0,8);svRC()}};
 gid('qx').onclick=function(){gid('q').value='';renderS()};
@@ -446,8 +460,9 @@ gid('cancel').onclick=function(){selectTab(0)};
 /* Local audio library: metadata in localStorage, audio blobs in IndexedDB. */
 window.KIMO_TRACKS=[];
 try{window.KIMO_TRACKS=JSON.parse(localStorage.getItem('kimo_tracks')||'[]')}catch(e){}
-function saveTracks(){try{localStorage.setItem('kimo_tracks',JSON.stringify(window.KIMO_TRACKS))}catch(e){toast('Не удалось сохранить список треков')}}
-function drawTracks(){var box=gid('localTracks');box.innerHTML=window.KIMO_TRACKS.length?'<div class="rch"><span>Мои аудиофайлы · '+window.KIMO_TRACKS.length+'</span></div>'+window.KIMO_TRACKS.map(function(t){return '<div class="li" data-local-id="'+esc(t.id)+'"><div class="c" style="background:#2c3a6b">♪</div><div class="lt"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div><button class="ib" data-del="'+esc(t.id)+'" aria-label="Удалить">×</button></div>'}).join(''):'<div class="empty">Медиатека пуста. Нажми +, чтобы импортировать музыку.</div>'}
+try{var _ac=JSON.parse(localStorage.getItem('kimo_audius_cache')||'[]');window.KIMO_TRACKS=window.KIMO_TRACKS.concat(_ac.filter(function(t){return !window.KIMO_TRACKS.some(function(x){return x.id===t.id})}))}catch(e){}
+function saveTracks(){try{localStorage.setItem('kimo_tracks',JSON.stringify(window.KIMO_TRACKS.filter(function(t){return t.source!=='audius'})))}catch(e){toast('Не удалось сохранить список треков')}}
+function drawTracks(){var box=gid('localTracks'),local=(window.KIMO_TRACKS||[]).filter(function(t){return t.source!=='audius'});box.innerHTML=local.length?'<div class="rch"><span>Мои аудиофайлы · '+local.length+'</span></div>'+local.map(function(t){return '<div class="li" data-local-id="'+esc(t.id)+'"><div class="c" style="background:#2c3a6b">♪</div><div class="lt"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div><button class="ib" data-del="'+esc(t.id)+'" aria-label="Удалить">×</button></div>'}).join(''):'<div class="empty">Медиатека пуста. Нажми +, чтобы импортировать музыку.</div>'}
 drawTracks();
 gid('importTracks').onclick=function(){gid('audioFiles').click()};
 gid('audioFiles').onchange=function(){
@@ -578,9 +593,11 @@ function renderQueue(){
  });
 }
 function playNext(){while(queueIds.length){var id=queueIds.shift();saveQueue();if((window.KIMO_TRACKS||[]).some(function(t){return t.id===id})){play(id,true);return}}move(1,true)}
-function play(id,fromQueue){var request=++playRequest;if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;getBlob(id,function(blob){if(request!==playRequest)return;if(!blob){toast('Аудиофайл не найден');if(fromQueue)playNext();return}if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id})){if(fromQueue)playNext();return}a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')})}
+var streamController=null;
+function activateSource(id,request,blob){if(request!==playRequest)return;if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id}))return;a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')}
+function play(id,fromQueue){var request=++playRequest;if(streamController){streamController.abort();streamController=null}if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;if(t.source==='audius'){var key=audiusKey();if(!key){toast('Сначала подключи Audius API Key');return}var controller=new AbortController();streamController=controller;fetch('https://api.audius.co/v1/tracks/'+encodeURIComponent(t.audiusId)+'/stream',{headers:{'x-api-key':key},signal:controller.signal}).then(function(response){if(!response.ok)throw new Error('HTTP '+response.status);return response.blob()}).then(function(blob){if(controller.signal.aborted||request!==playRequest)return;if(!blob||!blob.size)throw new Error('Empty audio');activateSource(id,request,blob)}).catch(function(error){if(error.name==='AbortError'||request!==playRequest)return;toast('Этот трек недоступен для воспроизведения');if(fromQueue)playNext()});return}getBlob(id,function(blob){if(request!==playRequest)return;if(!blob){toast('Аудиофайл не найден');if(fromQueue)playNext();return}activateSource(id,request,blob)})}
 window.KIMO_PLAY_TRACK=play;
-window.KIMO_STOP=function(){playRequest++;a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
+window.KIMO_STOP=function(){playRequest++;if(streamController){streamController.abort();streamController=null}a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
 function toggle(){if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(){toast('Не удалось начать воспроизведение')});else a.pause()}
 function move(dir,automatic){var list=window.KIMO_TRACKS||[];if(!list.length)return;var i=list.findIndex(function(t){return t.id===currentId});if(i<0){play(list[0].id);return}if(shuffle&&list.length>1){var n=i;while(n===i)n=Math.floor(Math.random()*list.length);i=n}else{var next=i+dir;if(automatic&&repeatMode===0&&dir>0&&next>=list.length)return;i=(next+list.length)%list.length}if(list[i])play(list[i].id)}
 function nextTrack(){if(queueIds.length)playNext();else move(1,false)}
