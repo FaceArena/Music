@@ -457,8 +457,8 @@ function renderAudius(items){var box=gid('audiusResults');if(!box)return;if(!ite
 function searchAudius(query,append){clearTimeout(audiusTimer);if(audiusController){audiusController.abort();audiusController=null}var box=gid('audiusResults'),key=audiusKey();query=(query||'').trim();if(query&&query.length<2){if(box)box.innerHTML='';return}if(!key){if(box)box.innerHTML='<div class="aud-error">Введи API Key выше, чтобы открыть каталог Audius.</div>';return}if(!append){audiusQuery=query;audiusOffset=0;audiusHasMore=false;audiusHits=[]}else if(query!==audiusQuery||!audiusHasMore)return;audiusTimer=setTimeout(function(){var controller=new AbortController();audiusController=controller;if(box&&!append)box.innerHTML='<div class="aud-error">'+(query?'Ищем в Audius…':'Загружаем популярную музыку…')+'</div>';else if(box){var more=box.querySelector('[data-audius-more]');if(more){more.textContent='Загружаем…';more.disabled=true}}var endpoint=(query?'https://api.audius.co/v1/tracks/search?query='+encodeURIComponent(query):'https://api.audius.co/v1/tracks/trending?time=week')+'&limit='+audiusPageSize+'&offset='+audiusOffset;fetch(endpoint,{headers:{'x-api-key':key},signal:controller.signal}).then(function(response){if(!response.ok)throw new Error('HTTP '+response.status);return response.json()}).then(function(json){if(controller.signal.aborted||gid('q').value.trim()!==query||query!==audiusQuery)return;var rows=Array.isArray(json.data)?json.data:[];var mapped=rows.filter(function(t){return t&&t.id&&t.is_streamable!==false&&!t.is_stream_gated}).map(function(t){var id='audius_'+String(t.id),user=t.user||{};return {id:id,source:'audius',audiusId:String(t.id),title:t.title||'Без названия',artist:user.name||t.artist_name||'Неизвестный исполнитель',artwork:(t.artwork&&(t.artwork['480x480']||t.artwork._480x480||t.artwork['150x150']||t.artwork._150x150))||'',duration:Number(t.duration)||0,streamable:t.is_streamable!==false,streamUrl:t.stream&&typeof t.stream.url==='string'?t.stream.url:''}});var known=Object.create(null);audiusHits.forEach(function(t){known[t.id]=true});mapped=mapped.filter(function(t){if(known[t.id])return false;known[t.id]=true;return true});audiusHits=audiusHits.concat(mapped);audiusOffset+=rows.length;audiusHasMore=rows.length===audiusPageSize;rememberAudiusTracks(mapped);if(audiusHits.length)renderAudius(audiusHits);else if(box)box.innerHTML='<div class="aud-error">'+(query?'По этому запросу ничего не найдено. Попробуй другое название.':'Audius пока не вернул популярные треки.')+'</div>'}).catch(function(error){if(error.name==='AbortError')return;if(box){var more=box.querySelector('[data-audius-more]');if(more){more.disabled=false;more.textContent='Повторить загрузку'}else if(!append)box.innerHTML='';box.insertAdjacentHTML('beforeend','<div class="aud-error">Audius: '+esc(error.message||'ошибка запроса')+'. Проверь API Key и соединение.</div>')}})},query?320:0)}
 
 function renderS(){var raw=gid('q').value.trim(),q=raw.toLowerCase();gid('schips').style.display=q?'flex':'none';gid('qx').style.visibility=raw?'visible':'hidden';var list=(window.KIMO_TRACKS||[]).filter(function(t){return t.source!=='audius'&&(!q||(t.title+' '+t.artist).toLowerCase().includes(q))&&(!SF||SF===1)});gid('sug').innerHTML='';gid('res').innerHTML=list.length?list.map(function(t){return '<div class="rs" data-track-id="'+esc(t.id)+'"><div class="av2"></div><div class="rt"><b>'+esc(t.title)+'</b><span>Трек • '+esc(t.artist)+'</span></div></div>'}).join(''):(q?'<div class="empty">В локальной медиатеке ничего не найдено.</div>':'<div class="empty">Импортируй аудиофайлы или найди музыку в Audius.</div>');searchAudius(raw)}
-gid('audKeySave').onclick=function(){var input=gid('audKeyInput'),key=(input.value||'').trim();if(!key){toast('Вставь Audius API Key');return}try{localStorage.setItem('kimo_audius_key',key)}catch(e){toast('Не удалось сохранить ключ');return}input.value='';setAudiusStatus();toast('Audius подключён');renderS();searchAudius('')};
-gid('audKeyClear').onclick=function(){try{localStorage.removeItem('kimo_audius_key')}catch(e){}setAudiusStatus();audiusHits=[];gid('audiusResults').innerHTML='';toast('API Key удалён')};setAudiusStatus();if(audiusKey())searchAudius('');
+gid('audKeySave').onclick=function(){var input=gid('audKeyInput'),key=(input.value||'').trim();if(!key){toast('Вставь Audius API Key');return}try{localStorage.setItem('kimo_audius_key',key)}catch(e){toast('Не удалось сохранить ключ');return}input.value='';setAudiusStatus();toast('Audius подключён');renderS()};
+gid('audKeyClear').onclick=function(){clearTimeout(audiusTimer);if(audiusController){audiusController.abort();audiusController=null}audiusHits=[];audiusOffset=0;audiusHasMore=false;try{localStorage.removeItem('kimo_audius_key')}catch(e){}setAudiusStatus();gid('audiusResults').innerHTML='';toast('API Key удалён')};setAudiusStatus();if(audiusKey())searchAudius('');
 gid('schips').onclick=function(e){var b=e.target.closest('.chip');if(!b)return;SF=+b.dataset.f;[].forEach.call(this.children,function(x){x.classList.toggle('on',+x.dataset.f===SF)});renderS()};
 function playAudiusRow(e){var r=e.target.closest('[data-audius-id]');if(!r)return;var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===r.dataset.audiusId});if(t&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(t.id)}
 gid('res').onclick=function(e){var r=e.target.closest('[data-track-id]');if(r&&window.KIMO_PLAY_TRACK)window.KIMO_PLAY_TRACK(r.dataset.trackId)};gid('audiusResults').onclick=function(e){if(e.target.closest('[data-audius-more]')){searchAudius(audiusQuery,true);return}playAudiusRow(e)};gid('r1').onclick=playAudiusRow;
@@ -685,10 +685,19 @@ dr.addEventListener('touchend',function(e){if(sx!==null&&sx-e.changedTouches[0].
 
 /* ===== LIKES ===== */
 var LIKES = [];
-try { LIKES = JSON.parse(localStorage.getItem('pl_likes') || '[]').filter(function(x){return x.id!=='stoboy'&&x.title!=='С тобой'&&x.title!=='Текст песни'}); } catch(e) {}
+try { LIKES = JSON.parse(localStorage.getItem('pl_likes') || '[]').filter(function(x){return x&&typeof x.id==='string'&&typeof x.title==='string'&&x.id!=='stoboy'&&x.title!=='С тобой'&&x.title!=='Текст песни'}); } catch(e) {}
 function saveLikes() { try { localStorage.setItem('pl_likes', JSON.stringify(LIKES)); } catch(e) {} }
 
 var CUR_TRACK = { id: '', title: 'Выбери трек', artist: 'Локальная медиатека', color: '#2c3a6b' };
+window.kimoTrackChanged = function(track) {
+  CUR_TRACK = track && track.id ? {
+    id: String(track.id),
+    title: String(track.title || 'Без названия'),
+    artist: String(track.artist || 'Неизвестный исполнитель'),
+    color: /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(track.color || '') ? track.color : '#2c3a6b'
+  } : { id: '', title: 'Выбери трек', artist: 'Локальная медиатека', color: '#2c3a6b' };
+  updateLikeBtn(false);
+};
 
 function isLiked(id) {
   return LIKES.some(function(x) { return x.id === id; });
@@ -787,12 +796,14 @@ function renderLikes(anim) {
   if (empty) empty.style.display = 'none';
   var c = anim ? ' a' : '';
   var h = LIKES.map(function(t, i) {
-    return '<div class="li' + c + '" style="--d:' + i + '" data-like-id="' + t.id + '">' +
-      '<div class="c" style="background:' + (t.color || '#2c3a6b') + '">' +
+    var safeColor = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(t.color || '') ? t.color : '#2c3a6b';
+    var safeId = esc(t.id);
+    return '<div class="li' + c + '" style="--d:' + i + '" data-like-id="' + safeId + '">' +
+      '<div class="c" style="background:' + safeColor + '">' +
         '<svg viewBox="0 0 24 24" style="width:40%;height:40%;fill:#fff;stroke:none"><path d="' + HEART_PATH + '"/></svg>' +
       '</div>' +
       '<div class="lt"><b>' + (typeof esc === 'function' ? esc(t.title) : t.title) + '</b><span>' + (typeof esc === 'function' ? esc(t.artist) : t.artist) + '</span></div>' +
-      '<button class="ib" data-unlike="' + t.id + '" aria-label="Убрать лайк" style="flex:none">' +
+      '<button class="ib" data-unlike="' + safeId + '" aria-label="Убрать лайк" style="flex:none">' +
         '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ff5c7a" stroke="#ff5c7a"><path d="' + HEART_PATH + '"/></svg>' +
       '</button>' +
     '</div>';
