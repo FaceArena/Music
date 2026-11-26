@@ -480,38 +480,37 @@ gid('audioFiles').onchange=function(){
  if(!files.length)return;
  // iOS Files may report downloaded audio as application/octet-stream.
  // Do not rely on the MIME filter: validate the extension ourselves.
- var allowed=/\.(mp3|m4a|m4b|aac|wav|aiff?|caf|flac|ogg|opus|amr|3gp)$/i;
+ var allowed=/\\.(mp3|m4a|m4b|aac|wav|aiff?|caf|flac|ogg|opus|amr|3gp)$/i;
  var accepted=files.filter(function(file){return (file.type&&file.type.indexOf('audio/')===0)||allowed.test(file.name||'')});
  var rejected=files.length-accepted.length;
  if(!accepted.length){toast('Не найдены поддерживаемые аудиофайлы');return}
- var saved=0,failed=0;
- Promise.all(accepted.map(function(file){
-  return new Promise(function(resolve){
-   var id='local_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2);
-   var req;
-   try{req=indexedDB.open('kimo_audio',1)}catch(err){failed++;resolve();return}
-   req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};
-   req.onerror=function(){failed++;resolve()};
-   req.onblocked=function(){failed++;resolve()};
-   req.onsuccess=function(){
-    var db=req.result,tx;
-    try{tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').put(file,id)}
-    catch(err){db.close();failed++;resolve();return}
-    tx.oncomplete=function(){
-     db.close();
-     window.KIMO_TRACKS.push({id:id,title:file.name.replace(/\.[^.]+$/,''),artist:'Локальный файл',name:file.name});
-     saved++;resolve();
-    };
-    tx.onerror=tx.onabort=function(){db.close();failed++;resolve()};
-   };
-  });
- })).then(function(){
-  if(saved) {saveTracks();drawTracks();renderS()}
-  var message=saved+' из '+files.length+' файлов добавлено';
-  if(rejected)message+=' · пропущено: '+rejected;
-  if(failed)message+=' · ошибок: '+failed;
-  toast(message);
- });
+ if(!window.indexedDB){toast('Хранилище аудио недоступно в этом браузере');return}
+ var req;
+ try{req=indexedDB.open('kimo_audio',1)}catch(error){toast('Хранилище аудио недоступно');return}
+ req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};
+ req.onerror=function(){toast('Не удалось открыть хранилище аудио')};
+ req.onblocked=function(){toast('Закрой другие вкладки Kimo, чтобы импортировать музыку')};
+ req.onsuccess=function(){
+  var db=req.result,tx,newTracks=accepted.map(function(file){return {id:'local_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2),title:file.name.replace(/\\.[^.]+$/,''),artist:'Локальный файл',name:file.name}});
+  db.onversionchange=function(){db.close()};
+  try{
+   tx=db.transaction('tracks','readwrite');
+   var store=tx.objectStore('tracks');
+   accepted.forEach(function(file,i){store.put(file,newTracks[i].id)});
+  }catch(error){db.close();toast('Не удалось сохранить аудиофайлы');return}
+  var finished=false;
+  function finish(ok){
+   if(finished)return;finished=true;db.close();
+   if(!ok){toast('Не удалось сохранить аудиофайлы');return}
+   window.KIMO_TRACKS=window.KIMO_TRACKS.concat(newTracks);
+   saveTracks();drawTracks();renderS();
+   var message=accepted.length+' из '+files.length+' файлов добавлено';
+   if(rejected)message+=' · пропущено: '+rejected;
+   toast(message);
+  }
+  tx.oncomplete=function(){finish(true)};
+  tx.onerror=tx.onabort=function(){finish(false)};
+ };
 };
 gid('localTracks').onclick=function(e){var d=e.target.closest('[data-del]');if(d){var id=d.dataset.del;if(window.KIMO_CURRENT_ID===id&&window.KIMO_STOP)window.KIMO_STOP();if(window.kimoRemoveLike)window.kimoRemoveLike(id);window.KIMO_TRACKS=window.KIMO_TRACKS.filter(function(t){return t.id!==id});saveTracks();var req=indexedDB.open('kimo_audio',1);req.onsuccess=function(){var db=req.result,tx=db.transaction('tracks','readwrite');tx.objectStore('tracks').delete(id);tx.oncomplete=function(){db.close()}};drawTracks();renderS();return}var row=e.target.closest('[data-local-id]');if(row)window.KIMO_PLAY_TRACK(row.dataset.localId)};
 /* library */
@@ -608,7 +607,7 @@ function playNext(){while(queueIds.length){var id=queueIds.shift();saveQueue();i
 var streamController=null;
 function activateSource(id,request,blob){if(request!==playRequest)return;if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id}))return;loading=false;a.pause();if(objectUrl)URL.revokeObjectURL(objectUrl);currentId=id;window.KIMO_CURRENT_ID=id;objectUrl=URL.createObjectURL(blob);a.src=objectUrl;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(){toast('Не удалось начать воспроизведение')});gid('player').classList.add('open');document.body.classList.add('pushed')}
 function activateStream(id,request,url){if(request!==playRequest)return;if(!(window.KIMO_TRACKS||[]).some(function(x){return x.id===id}))return;loading=false;a.pause();if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}currentId=id;window.KIMO_CURRENT_ID=id;/* Web Audio analyser routes media through MediaElementAudioSourceNode. Cross-origin audio without CORS mode is muted by the browser once connected to Web Audio. Set CORS mode BEFORE assigning src. */a.crossOrigin='anonymous';a.preload='auto';a.src=url;a.load();labels();var p=a.play();if(p&&p.catch)p.catch(function(error){console.error('Kimo audio play rejected:',error);toast(audioDiagnostic('Audius play rejected',error))});gid('player').classList.add('open');document.body.classList.add('pushed')}
-function play(id,fromQueue){var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;var request=++playRequest;if(streamController){streamController.abort();streamController=null}if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();a.pause();currentId=id;window.KIMO_CURRENT_ID=id;labels();gid('player').classList.add('open');document.body.classList.add('pushed');if(t.source==='audius'){loading=false;var key=audiusKey();if(!key){a.removeAttribute('src');a.load();toast('Сначала подключи Audius API Key');return}/* Start the media request directly inside the user's tap handler. Do not await metadata first: iOS Safari can reject play() after an async gap. */var streamUrl='https://api.audius.co/v1/tracks/'+encodeURIComponent(t.audiusId)+'/stream?api_key='+encodeURIComponent(key);activateStream(id,request,streamUrl);var controller=new AbortController();streamController=controller;var endpoint='https://api.audius.co/v1/tracks/'+encodeURIComponent(t.audiusId);fetch(endpoint,{headers:{'x-api-key':key,'Accept':'application/json'},signal:controller.signal,cache:'no-store'}).then(function(response){if(!response.ok)throw new Error('Audius metadata: HTTP '+response.status);return response.json()}).then(function(json){if(request!==playRequest)return;var data=json&&json.data;if(data&&data.artwork){var freshArt=data.artwork['480x480']||data.artwork._480x480||data.artwork['150x150']||data.artwork._150x150;if(freshArt){t.artwork=freshArt;rememberAudiusTracks([t]);labels()}}}).catch(function(error){if(error.name!=='AbortError')console.warn('Kimo Audius artwork metadata unavailable:',error)}).then(function(){if(request===playRequest&&streamController===controller)streamController=null});return}if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}a.removeAttribute('src');a.load();loading=true;getBlob(id,function(blob){if(request!==playRequest)return;loading=false;if(!blob){currentId=null;window.KIMO_CURRENT_ID=null;labels();progress();controls();toast('Аудиофайл не найден');if(fromQueue)playNext();return}activateSource(id,request,blob)})}
+function play(id,fromQueue){var t=(window.KIMO_TRACKS||[]).find(function(x){return x.id===id});if(!t)return;var request=++playRequest;if(streamController){streamController.abort();streamController=null}if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();a.pause();currentId=id;window.KIMO_CURRENT_ID=id;labels();gid('player').classList.add('open');document.body.classList.add('pushed');if(t.source==='audius'){loading=false;var key=audiusKey();if(!key){if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}a.removeAttribute('src');a.load();toast('Сначала подключи Audius API Key');return}/* Start the media request directly inside the user's tap handler. Do not await metadata first: iOS Safari can reject play() after an async gap. */var streamUrl='https://api.audius.co/v1/tracks/'+encodeURIComponent(t.audiusId)+'/stream?api_key='+encodeURIComponent(key);activateStream(id,request,streamUrl);var controller=new AbortController();streamController=controller;var endpoint='https://api.audius.co/v1/tracks/'+encodeURIComponent(t.audiusId);fetch(endpoint,{headers:{'x-api-key':key,'Accept':'application/json'},signal:controller.signal,cache:'no-store'}).then(function(response){if(!response.ok)throw new Error('Audius metadata: HTTP '+response.status);return response.json()}).then(function(json){if(request!==playRequest)return;var data=json&&json.data;if(data&&data.artwork){var freshArt=data.artwork['480x480']||data.artwork._480x480||data.artwork['150x150']||data.artwork._150x150;if(freshArt){t.artwork=freshArt;rememberAudiusTracks([t]);labels()}}}).catch(function(error){if(error.name!=='AbortError')console.warn('Kimo Audius artwork metadata unavailable:',error)}).then(function(){if(request===playRequest&&streamController===controller)streamController=null});return}if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null}a.removeAttribute('src');a.load();loading=true;getBlob(id,function(blob){if(request!==playRequest)return;loading=false;if(!blob){currentId=null;window.KIMO_CURRENT_ID=null;labels();progress();controls();toast('Аудиофайл не найден');if(fromQueue)playNext();return}activateSource(id,request,blob)})}
 window.KIMO_PLAY_TRACK=play;
 window.KIMO_STOP=function(){playRequest++;loading=false;if(streamController){streamController.abort();streamController=null}a.pause();a.removeAttribute('src');a.load();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;currentId=null;window.KIMO_CURRENT_ID=null;labels();progress()};
 function toggle(){if(loading){toast('Подготавливаем аудиофайл…');return}if(window.KIMO_VISUALIZER_START)window.KIMO_VISUALIZER_START();if(!a.src){if(currentId){play(currentId);return}var t=(window.KIMO_TRACKS||[])[0];if(t)play(t.id);else toast('Сначала импортируй аудиофайл')}else if(a.paused)a.play().catch(function(error){console.error('Kimo manual play rejected:',error);toast(audioDiagnostic('Play rejected',error))});else a.pause()}
@@ -1228,9 +1227,9 @@ document.getElementById('tgA').onclick = function() { S.a = S.a ? 0 : 1; ap(); }
 
 /* фон: фото / видео (файл хранится в IndexedDB) */
 var bgm=document.getElementById('bgm'),bgT=document.getElementById('bgT'),bgS=document.getElementById('bgS'),bgDel=document.getElementById('bgDel'),bgD=document.getElementById('bgD'),bgIco=bgT.innerHTML;
-function idb(cb){try{var r=indexedDB.open('pl_bg',1);r.onupgradeneeded=function(){r.result.createObjectStore('f')};r.onsuccess=function(){cb(r.result)};r.onerror=function(){cb(null)}}catch(e){cb(null)}}
-function idbGet(cb){idb(function(d){if(!d)return cb(null);try{var q=d.transaction('f').objectStore('f').get('bg');q.onsuccess=function(){cb(q.result||null)};q.onerror=function(){cb(null)}}catch(e){cb(null)}})}
-function idbSet(b,cb){idb(function(d){if(!d)return cb&&cb(false);try{var t=d.transaction('f','readwrite'),o=t.objectStore('f');if(b)o.put(b,'bg');else o.delete('bg');t.oncomplete=function(){cb&&cb(true)};t.onerror=function(){cb&&cb(false)}}catch(e){cb&&cb(false)}})}
+function idb(cb){var r,settled=false;function fail(){if(settled)return;settled=true;cb(null)}try{r=indexedDB.open('pl_bg',1)}catch(e){fail();return}r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('f'))r.result.createObjectStore('f')};r.onsuccess=function(){var db=r.result;if(settled){db.close();return}settled=true;cb(db)};r.onerror=fail;r.onblocked=fail}
+function idbGet(cb){idb(function(d){if(!d)return cb(null);var done=false;function finish(value){if(done)return;done=true;d.close();cb(value||null)}try{var tx=d.transaction('f','readonly'),q=tx.objectStore('f').get('bg');q.onsuccess=function(){finish(q.result)};q.onerror=function(){finish(null)};tx.onabort=function(){finish(null)}}catch(e){finish(null)}})}
+function idbSet(b,cb){idb(function(d){if(!d){if(cb)cb(false);return}var done=false;function finish(ok){if(done)return;done=true;d.close();if(cb)cb(ok)}try{var t=d.transaction('f','readwrite'),o=t.objectStore('f');if(b)o.put(b,'bg');else o.delete('bg');t.oncomplete=function(){finish(true)};t.onerror=t.onabort=function(){finish(false)}}catch(e){finish(false)}})}
 function mk(file,bg){var v=file.type.indexOf('video')===0,e=document.createElement(v?'video':'img');
  if(v){e.muted=true;e.defaultMuted=true;e.loop=bg;e.playsInline=true;e.setAttribute('muted','');e.setAttribute('playsinline','');e.setAttribute('webkit-playsinline','');e.preload=bg?'auto':'metadata';if(bg){e.autoplay=true;e.disablePictureInPicture=true}}
  else e.alt='';
