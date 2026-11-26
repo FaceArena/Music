@@ -51,7 +51,8 @@ h2{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:34px 20px 12px}
 .tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke-width .3s}
 .tab.on{color:var(--tx)}.tab.on svg{stroke-width:2.4}.dock.drag .tab.on{transform:scale(1.08)}
 .player,.lyr{position:fixed;top:0;bottom:0;left:50%;width:min(480px,100%);transform:translate(-50%,100%);z-index:20;transition:transform .65s var(--sp),border-radius .65s;overflow:hidden;display:flex;flex-direction:column;border-radius:34px 34px 0 0;background:var(--tk)}
-.player{padding:calc(env(safe-area-inset-top,0px) + 10px) 24px calc(env(safe-area-inset-bottom,0px) + 16px);touch-action:none}
+.player{height:100vh;height:100dvh;max-height:100dvh;min-height:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 24px calc(env(safe-area-inset-bottom,0px) + 24px);overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none;touch-action:pan-y;scroll-padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)}
+.player::-webkit-scrollbar{display:none}
 .lyr{z-index:30;padding:calc(env(safe-area-inset-top,0px) + 10px) 24px calc(env(safe-area-inset-bottom,0px) + 18px)}
 .player.open,.lyr.open{transform:translate(-50%,0);border-radius:0}
 .st{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .8s var(--sp)}
